@@ -12,7 +12,7 @@ import {
 	sRGBEncoding,
 	TextureLoader,
 	TorusBufferGeometry
-} from "three";
+} from "super-three";
 
 import { ProgressManager } from "../utils/ProgressManager";
 import { PostProcessingDemo } from "./PostProcessingDemo";

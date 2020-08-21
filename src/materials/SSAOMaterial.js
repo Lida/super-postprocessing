@@ -1,4 +1,4 @@
-import { Matrix4, PerspectiveCamera, ShaderMaterial, Uniform, Vector2 } from "three";
+import { Matrix4, PerspectiveCamera, ShaderMaterial, Uniform, Vector2 } from "super-three";
 
 import fragmentShader from "./glsl/ssao/shader.frag";
 import vertexShader from "./glsl/ssao/shader.vert";

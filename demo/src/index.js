@@ -4,7 +4,7 @@ import {
 	sRGBEncoding,
 	Vector3,
 	WebGLRenderer
-} from "three";
+} from "super-three";
 
 import { DemoManager } from "three-demo";
 import { EffectComposer, OverrideMaterialManager } from "../../src";

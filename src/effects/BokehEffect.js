@@ -1,4 +1,4 @@
-import { Uniform } from "three";
+import { Uniform } from "super-three";
 import { BlendFunction } from "./blending/BlendFunction";
 import { Effect, EffectAttribute } from "./Effect";
 

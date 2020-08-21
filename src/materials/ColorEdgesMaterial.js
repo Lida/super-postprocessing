@@ -1,4 +1,4 @@
-import { ShaderMaterial, Uniform, Vector2 } from "three";
+import { ShaderMaterial, Uniform, Vector2 } from "super-three";
 
 import fragmentShader from "./glsl/edge-detection/color.frag";
 import vertexShader from "./glsl/edge-detection/shader.vert";

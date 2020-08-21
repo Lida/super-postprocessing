@@ -15,7 +15,7 @@ import {
 	sRGBEncoding,
 	TextureLoader,
 	Vector2
-} from "three";
+} from "super-three";
 
 import { SpatialControls } from "spatial-controls";
 import { ProgressManager } from "../utils/ProgressManager";

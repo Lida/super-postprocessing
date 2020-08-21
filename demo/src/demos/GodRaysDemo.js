@@ -8,7 +8,7 @@ import {
 	PointLight,
 	SphereBufferGeometry,
 	Vector3
-} from "three";
+} from "super-three";
 
 import { SpatialControls } from "spatial-controls";
 import { ProgressManager } from "../utils/ProgressManager";

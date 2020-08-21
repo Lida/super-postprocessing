@@ -10,7 +10,7 @@ import {
 	Vector3,
 	UnsignedByteType,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { Resizer } from "../core/Resizer";
 import { DepthMaskMaterial, KernelSize, GodRaysMaterial } from "../materials";

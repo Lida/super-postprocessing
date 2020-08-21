@@ -1,4 +1,4 @@
-import { ShaderMaterial, Uniform, Vector2, Vector4 } from "three";
+import { ShaderMaterial, Uniform, Vector2, Vector4 } from "super-three";
 
 import fragmentShader from "./glsl/bokeh/shader.frag";
 import vertexShader from "./glsl/common/shader.vert";

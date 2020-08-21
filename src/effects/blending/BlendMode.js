@@ -1,4 +1,4 @@
-import { EventDispatcher, Uniform } from "three";
+import { EventDispatcher, Uniform } from "super-three";
 import { BlendFunction } from "./BlendFunction";
 
 import addBlendFunction from "./glsl/add/shader.frag";

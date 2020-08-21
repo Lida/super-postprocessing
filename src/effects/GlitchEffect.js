@@ -4,7 +4,7 @@ import {
 	RGBFormat,
 	Uniform,
 	Vector2
-} from "three";
+} from "super-three";
 
 import { NoiseTexture } from "../images/textures/NoiseTexture";
 import { BlendFunction } from "./blending/BlendFunction";

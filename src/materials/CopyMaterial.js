@@ -1,4 +1,4 @@
-import { ShaderMaterial, Uniform } from "three";
+import { ShaderMaterial, Uniform } from "super-three";
 
 import fragmentShader from "./glsl/copy/shader.frag";
 import vertexShader from "./glsl/common/shader.vert";

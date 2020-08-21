@@ -4,7 +4,7 @@ import {
 	Camera,
 	Mesh,
 	Scene
-} from "three";
+} from "super-three";
 
 /**
  * A dummy camera

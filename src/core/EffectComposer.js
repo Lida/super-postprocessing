@@ -10,7 +10,7 @@ import {
 	Vector2,
 	WebGLMultisampleRenderTarget,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { ClearMaskPass, MaskPass, ShaderPass } from "../passes";
 import { CopyMaterial } from "../materials";

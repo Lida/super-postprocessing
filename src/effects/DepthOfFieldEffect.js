@@ -1,4 +1,4 @@
-import { LinearFilter, RGBFormat, Uniform, UnsignedByteType, WebGLRenderTarget } from "three";
+import { LinearFilter, RGBFormat, Uniform, UnsignedByteType, WebGLRenderTarget } from "super-three";
 import { ColorChannel, Resizer } from "../core";
 import { BokehMaterial, CircleOfConfusionMaterial, KernelSize, MaskFunction, MaskMaterial } from "../materials";
 import { BlurPass, ShaderPass } from "../passes";

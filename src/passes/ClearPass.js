@@ -1,4 +1,4 @@
-import { Color } from "three";
+import { Color } from "super-three";
 import { Pass } from "./Pass";
 
 /**

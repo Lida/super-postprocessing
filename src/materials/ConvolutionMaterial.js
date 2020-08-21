@@ -1,4 +1,4 @@
-import { ShaderMaterial, Uniform, Vector2 } from "three";
+import { ShaderMaterial, Uniform, Vector2 } from "super-three";
 
 import fragmentShader from "./glsl/convolution/shader.frag";
 import vertexShader from "./glsl/convolution/shader.vert";

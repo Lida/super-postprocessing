@@ -6,7 +6,7 @@ import {
 	RGBFormat,
 	Uniform,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { AdaptiveLuminanceMaterial, LuminanceMaterial } from "../materials";
 import { ClearPass, SavePass, ShaderPass } from "../passes";

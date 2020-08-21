@@ -4,7 +4,7 @@ import {
 	NearestFilter,
 	RGBADepthPacking,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { Resizer } from "../core/Resizer";
 import { Pass } from "./Pass";

@@ -1,4 +1,4 @@
-import { LinearEncoding, Matrix3, sRGBEncoding, Uniform } from "three";
+import { LinearEncoding, Matrix3, sRGBEncoding, Uniform } from "super-three";
 import { ColorChannel } from "../core/ColorChannel";
 import { BlendFunction } from "./blending/BlendFunction";
 import { Effect } from "./Effect";

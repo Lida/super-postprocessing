@@ -1,4 +1,4 @@
-import { EventDispatcher } from "three";
+import { EventDispatcher } from "super-three";
 import { BlendFunction, BlendMode } from "./blending";
 
 /**

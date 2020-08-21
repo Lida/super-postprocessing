@@ -5,7 +5,7 @@ import {
 	RGBFormat,
 	Uniform,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { BlendFunction } from "./blending/BlendFunction";
 import { Resizer } from "../core/Resizer";

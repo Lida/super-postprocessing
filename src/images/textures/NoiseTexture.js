@@ -6,7 +6,7 @@ import {
 	RGBFormat,
 	RGBAFormat,
 	UnsignedByteType
-} from "three";
+} from "super-three";
 
 /**
  * Generates noise.

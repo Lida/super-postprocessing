@@ -6,7 +6,7 @@ import {
 	Scene,
 	UnsignedByteType,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { Selection } from "../core/Selection";
 import { ClearPass, RenderPass } from "../passes";

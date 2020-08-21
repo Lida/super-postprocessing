@@ -1,4 +1,4 @@
-import { SphereBufferGeometry, Group, Mesh, MeshPhongMaterial } from "three";
+import { SphereBufferGeometry, Group, Mesh, MeshPhongMaterial } from "super-three";
 
 /**
  * Creates a sphere cloud.

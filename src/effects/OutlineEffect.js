@@ -6,7 +6,7 @@ import {
 	Uniform,
 	UnsignedByteType,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { Resizer, Selection } from "../core";
 import { DepthComparisonMaterial, OutlineMaterial, KernelSize } from "../materials";

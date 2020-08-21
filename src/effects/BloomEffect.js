@@ -1,4 +1,4 @@
-import { LinearFilter, RGBFormat, Uniform, UnsignedByteType, WebGLRenderTarget } from "three";
+import { LinearFilter, RGBFormat, Uniform, UnsignedByteType, WebGLRenderTarget } from "super-three";
 import { Resizer } from "../core/Resizer";
 import { KernelSize, LuminanceMaterial } from "../materials";
 import { BlurPass, ShaderPass } from "../passes";

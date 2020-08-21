@@ -4,7 +4,7 @@
  * Copyright 2020 Raoul van Rüschen
  * @license Zlib
  */
-import { ShaderMaterial, Uniform, Vector2 as Vector2$1, Vector4, PerspectiveCamera, Matrix4, Camera, Scene, Mesh, BufferGeometry, BufferAttribute, WebGLRenderTarget, LinearFilter, UnsignedByteType, RGBFormat, Color, MeshDepthMaterial, RGBADepthPacking, NearestFilter, FloatType, EventDispatcher, MeshNormalMaterial, WebGLMultisampleRenderTarget, DepthTexture, DepthStencilFormat, UnsignedInt248Type, UnsignedIntType, RGBAFormat, DataTexture, LuminanceFormat, RedFormat, RGFormat, RepeatWrapping, Vector3, MeshBasicMaterial, Texture, sRGBEncoding, LinearEncoding, Matrix3, LinearMipmapLinearFilter, LinearMipMapLinearFilter, Loader, LoadingManager } from 'three';
+import { ShaderMaterial, Uniform, Vector2 as Vector2$1, Vector4, PerspectiveCamera, Matrix4, Camera, Scene, Mesh, BufferGeometry, BufferAttribute, WebGLRenderTarget, LinearFilter, UnsignedByteType, RGBFormat, Color, MeshDepthMaterial, RGBADepthPacking, NearestFilter, FloatType, EventDispatcher, MeshNormalMaterial, WebGLMultisampleRenderTarget, DepthTexture, DepthStencilFormat, UnsignedInt248Type, UnsignedIntType, RGBAFormat, DataTexture, LuminanceFormat, RedFormat, RGFormat, RepeatWrapping, Vector3, MeshBasicMaterial, Texture, sRGBEncoding, LinearEncoding, Matrix3, LinearMipmapLinearFilter, LinearMipMapLinearFilter, Loader, LoadingManager } from 'super-three';
 
 /**
  * A color channel enumeration.

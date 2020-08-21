@@ -1,4 +1,4 @@
-import { FloatType, NearestFilter, WebGLRenderTarget } from "three";
+import { FloatType, NearestFilter, WebGLRenderTarget } from "super-three";
 
 import { Resizer } from "../core/Resizer";
 import { DepthDownsamplingMaterial } from "../materials";

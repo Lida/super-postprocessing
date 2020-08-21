@@ -1,4 +1,4 @@
-import { PerspectiveCamera, ShaderMaterial, Uniform } from "three";
+import { PerspectiveCamera, ShaderMaterial, Uniform } from "super-three";
 
 import fragmentShader from "./glsl/depth-comparison/shader.frag";
 import vertexShader from "./glsl/depth-comparison/shader.vert";

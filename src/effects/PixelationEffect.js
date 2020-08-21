@@ -1,4 +1,4 @@
-import { Uniform, Vector2 } from "three";
+import { Uniform, Vector2 } from "super-three";
 import { Effect } from "./Effect";
 
 import fragmentShader from "./glsl/pixelation/shader.frag";

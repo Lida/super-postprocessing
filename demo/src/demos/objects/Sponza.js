@@ -1,4 +1,4 @@
-import { AmbientLight, CameraHelper, DirectionalLight } from "three";
+import { AmbientLight, CameraHelper, DirectionalLight } from "super-three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { TextureUtils } from "../../utils/TextureUtils";
 

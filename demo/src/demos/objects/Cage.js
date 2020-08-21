@@ -1,4 +1,4 @@
-import { BoxBufferGeometry, Group, Mesh, MeshBasicMaterial } from "three";
+import { BoxBufferGeometry, Group, Mesh, MeshBasicMaterial } from "super-three";
 
 /**
  * Creates a cubic cage.

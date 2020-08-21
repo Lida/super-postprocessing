@@ -1,4 +1,4 @@
-import { Uniform, Vector2, Vector3 } from "three";
+import { Uniform, Vector2, Vector3 } from "super-three";
 import { Effect } from "./Effect";
 
 import fragmentShader from "./glsl/shock-wave/shader.frag";

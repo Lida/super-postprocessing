@@ -1,4 +1,4 @@
-import { Color, PerspectiveCamera, Vector3 } from "three";
+import { Color, PerspectiveCamera, Vector3 } from "super-three";
 import { SpatialControls } from "spatial-controls";
 import { ProgressManager } from "../utils/ProgressManager";
 import { PostProcessingDemo } from "./PostProcessingDemo";

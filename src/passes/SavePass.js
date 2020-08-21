@@ -1,4 +1,4 @@
-import { LinearFilter, RGBFormat, UnsignedByteType, WebGLRenderTarget } from "three";
+import { LinearFilter, RGBFormat, UnsignedByteType, WebGLRenderTarget } from "super-three";
 import { CopyMaterial } from "../materials";
 import { Pass } from "./Pass";
 

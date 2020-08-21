@@ -5,10 +5,10 @@
  * @license Zlib
  */
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('three')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'three'], factory) :
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('super-three')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'super-three'], factory) :
 	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.POSTPROCESSING = {}, global.THREE));
-}(this, (function (exports, three) { 'use strict';
+}(this, (function (exports, superThree) { 'use strict';
 
 	var ColorChannel = {
 	  RED: 0,
@@ -375,11 +375,11 @@
 	        MIP_LEVEL_1X1: "0.0"
 	      },
 	      uniforms: {
-	        previousLuminanceBuffer: new three.Uniform(null),
-	        currentLuminanceBuffer: new three.Uniform(null),
-	        minLuminance: new three.Uniform(0.01),
-	        deltaTime: new three.Uniform(0.0),
-	        tau: new three.Uniform(1.0)
+	        previousLuminanceBuffer: new superThree.Uniform(null),
+	        currentLuminanceBuffer: new superThree.Uniform(null),
+	        minLuminance: new superThree.Uniform(0.01),
+	        deltaTime: new superThree.Uniform(0.0),
+	        tau: new superThree.Uniform(1.0)
 	      },
 	      fragmentShader: fragmentShader,
 	      vertexShader: vertexShader,
@@ -391,7 +391,7 @@
 	  }
 
 	  return AdaptiveLuminanceMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$1 = "uniform sampler2D inputBuffer;uniform sampler2D cocBuffer;uniform vec2 texelSize;uniform float scale;\n#if PASS == 1\nuniform vec4 kernel64[32];\n#else\nuniform vec4 kernel16[8];\n#endif\nvarying vec2 vUv;void main(){\n#ifdef FOREGROUND\nvec2 CoCNearFar=texture2D(cocBuffer,vUv).rg;float CoC=CoCNearFar.r*scale;\n#else\nfloat CoC=texture2D(cocBuffer,vUv).g*scale;\n#endif\nif(CoC==0.0){gl_FragColor=texture2D(inputBuffer,vUv);}else{\n#ifdef FOREGROUND\nvec2 step=texelSize*max(CoC,CoCNearFar.g*scale);\n#else\nvec2 step=texelSize*CoC;\n#endif\n#if PASS == 1\nvec4 acc=vec4(0.0);for(int i=0;i<32;++i){vec4 kernel=kernel64[i];vec2 uv=step*kernel.xy+vUv;acc+=texture2D(inputBuffer,uv);uv=step*kernel.zw+vUv;acc+=texture2D(inputBuffer,uv);}gl_FragColor=acc/64.0;\n#else\nvec4 maxValue=texture2D(inputBuffer,vUv);for(int i=0;i<8;++i){vec4 kernel=kernel16[i];vec2 uv=step*kernel.xy+vUv;maxValue=max(texture2D(inputBuffer,uv),maxValue);uv=step*kernel.zw+vUv;maxValue=max(texture2D(inputBuffer,uv),maxValue);}gl_FragColor=maxValue;\n#endif\n}}";
 
@@ -414,12 +414,12 @@
 	        PASS: fill ? "2" : "1"
 	      },
 	      uniforms: {
-	        kernel64: new three.Uniform(null),
-	        kernel16: new three.Uniform(null),
-	        inputBuffer: new three.Uniform(null),
-	        cocBuffer: new three.Uniform(null),
-	        texelSize: new three.Uniform(new three.Vector2()),
-	        scale: new three.Uniform(1.0)
+	        kernel64: new superThree.Uniform(null),
+	        kernel16: new superThree.Uniform(null),
+	        inputBuffer: new superThree.Uniform(null),
+	        cocBuffer: new superThree.Uniform(null),
+	        texelSize: new superThree.Uniform(new superThree.Vector2()),
+	        scale: new superThree.Uniform(1.0)
 	      },
 	      fragmentShader: fragmentShader$1,
 	      vertexShader: vertexShader,
@@ -465,11 +465,11 @@
 	      var kernel16 = [];
 
 	      for (var _i = 0; _i < 128;) {
-	        kernel64.push(new three.Vector4(points64[_i++], points64[_i++], points64[_i++], points64[_i++]));
+	        kernel64.push(new superThree.Vector4(points64[_i++], points64[_i++], points64[_i++], points64[_i++]));
 	      }
 
 	      for (var _i2 = 0; _i2 < 32;) {
-	        kernel16.push(new three.Vector4(points16[_i2++], points16[_i2++], points16[_i2++], points16[_i2++]));
+	        kernel16.push(new superThree.Vector4(points16[_i2++], points16[_i2++], points16[_i2++], points16[_i2++]));
 	      }
 
 	      this.uniforms.kernel64.value = kernel64;
@@ -483,7 +483,7 @@
 	  }]);
 
 	  return BokehMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$2 = "#include <common>\n#include <packing>\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nuniform highp sampler2D depthBuffer;\n#else\nuniform mediump sampler2D depthBuffer;\n#endif\nuniform float focusDistance;uniform float focalLength;uniform float cameraNear;uniform float cameraFar;varying vec2 vUv;float readDepth(const in vec2 uv){\n#if DEPTH_PACKING == 3201\nreturn unpackRGBAToDepth(texture2D(depthBuffer,uv));\n#else\nreturn texture2D(depthBuffer,uv).r;\n#endif\n}void main(){float depth=readDepth(vUv);\n#ifdef PERSPECTIVE_CAMERA\nfloat viewZ=perspectiveDepthToViewZ(depth,cameraNear,cameraFar);float linearDepth=viewZToOrthographicDepth(viewZ,cameraNear,cameraFar);\n#else\nfloat linearDepth=depth;\n#endif\nfloat signedDistance=linearDepth-focusDistance;float magnitude=smoothstep(0.0,focalLength,abs(signedDistance));gl_FragColor.rg=vec2(step(signedDistance,0.0)*magnitude,step(0.0,signedDistance)*magnitude);}";
 
@@ -503,11 +503,11 @@
 	        DEPTH_PACKING: "0"
 	      },
 	      uniforms: {
-	        depthBuffer: new three.Uniform(null),
-	        focusDistance: new three.Uniform(0.0),
-	        focalLength: new three.Uniform(0.0),
-	        cameraNear: new three.Uniform(0.3),
-	        cameraFar: new three.Uniform(1000)
+	        depthBuffer: new superThree.Uniform(null),
+	        focusDistance: new superThree.Uniform(0.0),
+	        focalLength: new superThree.Uniform(0.0),
+	        cameraNear: new superThree.Uniform(0.3),
+	        cameraFar: new superThree.Uniform(1000)
 	      },
 	      fragmentShader: fragmentShader$2,
 	      vertexShader: vertexShader,
@@ -530,7 +530,7 @@
 	        this.uniforms.cameraNear.value = camera.near;
 	        this.uniforms.cameraFar.value = camera.far;
 
-	        if (camera instanceof three.PerspectiveCamera) {
+	        if (camera instanceof superThree.PerspectiveCamera) {
 	          this.defines.PERSPECTIVE_CAMERA = "1";
 	        } else {
 	          delete this.defines.PERSPECTIVE_CAMERA;
@@ -551,7 +551,7 @@
 	  }]);
 
 	  return CircleOfConfusionMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShaderColor = "uniform sampler2D inputBuffer;varying vec2 vUv;varying vec2 vUv0;varying vec2 vUv1;varying vec2 vUv2;varying vec2 vUv3;varying vec2 vUv4;varying vec2 vUv5;void main(){const vec2 threshold=vec2(EDGE_THRESHOLD);vec4 delta;vec3 c=texture2D(inputBuffer,vUv).rgb;vec3 cLeft=texture2D(inputBuffer,vUv0).rgb;vec3 t=abs(c-cLeft);delta.x=max(max(t.r,t.g),t.b);vec3 cTop=texture2D(inputBuffer,vUv1).rgb;t=abs(c-cTop);delta.y=max(max(t.r,t.g),t.b);vec2 edges=step(threshold,delta.xy);if(dot(edges,vec2(1.0))==0.0){discard;}vec3 cRight=texture2D(inputBuffer,vUv2).rgb;t=abs(c-cRight);delta.z=max(max(t.r,t.g),t.b);vec3 cBottom=texture2D(inputBuffer,vUv3).rgb;t=abs(c-cBottom);delta.w=max(max(t.r,t.g),t.b);vec2 maxDelta=max(delta.xy,delta.zw);vec3 cLeftLeft=texture2D(inputBuffer,vUv4).rgb;t=abs(c-cLeftLeft);delta.z=max(max(t.r,t.g),t.b);vec3 cTopTop=texture2D(inputBuffer,vUv5).rgb;t=abs(c-cTopTop);delta.w=max(max(t.r,t.g),t.b);maxDelta=max(maxDelta.xy,delta.zw);float finalDelta=max(maxDelta.x,maxDelta.y);edges*=step(finalDelta,LOCAL_CONTRAST_ADAPTATION_FACTOR*delta.xy);gl_FragColor=vec4(edges,0.0,1.0);}";
 
@@ -565,7 +565,7 @@
 	  function ColorEdgesMaterial() {
 	    var _this;
 
-	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new three.Vector2();
+	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new superThree.Vector2();
 
 	    _classCallCheck(this, ColorEdgesMaterial);
 
@@ -576,8 +576,8 @@
 	        EDGE_THRESHOLD: "0.1"
 	      },
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        texelSize: new three.Uniform(texelSize)
+	        inputBuffer: new superThree.Uniform(null),
+	        texelSize: new superThree.Uniform(texelSize)
 	      },
 	      fragmentShader: fragmentShaderColor,
 	      vertexShader: vertexShader$1,
@@ -604,7 +604,7 @@
 	  }]);
 
 	  return ColorEdgesMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$3 = "#include <common>\n#include <dithering_pars_fragment>\nuniform sampler2D inputBuffer;varying vec2 vUv0;varying vec2 vUv1;varying vec2 vUv2;varying vec2 vUv3;void main(){vec4 sum=texture2D(inputBuffer,vUv0);sum+=texture2D(inputBuffer,vUv1);sum+=texture2D(inputBuffer,vUv2);sum+=texture2D(inputBuffer,vUv3);gl_FragColor=sum*0.25;\n#include <dithering_fragment>\n}";
 
@@ -618,18 +618,18 @@
 	  function ConvolutionMaterial() {
 	    var _this;
 
-	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new three.Vector2();
+	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new superThree.Vector2();
 
 	    _classCallCheck(this, ConvolutionMaterial);
 
 	    _this = _super.call(this, {
 	      type: "ConvolutionMaterial",
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        texelSize: new three.Uniform(new three.Vector2()),
-	        halfTexelSize: new three.Uniform(new three.Vector2()),
-	        kernel: new three.Uniform(0.0),
-	        scale: new three.Uniform(1.0)
+	        inputBuffer: new superThree.Uniform(null),
+	        texelSize: new superThree.Uniform(new superThree.Vector2()),
+	        halfTexelSize: new superThree.Uniform(new superThree.Vector2()),
+	        kernel: new superThree.Uniform(0.0),
+	        scale: new superThree.Uniform(1.0)
 	      },
 	      fragmentShader: fragmentShader$3,
 	      vertexShader: vertexShader$2,
@@ -658,7 +658,7 @@
 	  }]);
 
 	  return ConvolutionMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 	var kernelPresets = [new Float32Array([0.0, 0.0]), new Float32Array([0.0, 1.0, 1.0]), new Float32Array([0.0, 1.0, 1.0, 2.0]), new Float32Array([0.0, 1.0, 2.0, 2.0, 3.0]), new Float32Array([0.0, 1.0, 2.0, 3.0, 4.0, 4.0, 5.0]), new Float32Array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 7.0, 8.0, 9.0, 10.0])];
 	var KernelSize = {
 	  VERY_SMALL: 0,
@@ -684,8 +684,8 @@
 	    _this = _super.call(this, {
 	      type: "CopyMaterial",
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        opacity: new three.Uniform(1.0)
+	        inputBuffer: new superThree.Uniform(null),
+	        opacity: new superThree.Uniform(1.0)
 	      },
 	      fragmentShader: fragmentShader$4,
 	      vertexShader: vertexShader,
@@ -697,7 +697,7 @@
 	  }
 
 	  return CopyMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$5 = "#include <packing>\n#include <clipping_planes_pars_fragment>\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nuniform highp sampler2D depthBuffer;\n#else\nuniform mediump sampler2D depthBuffer;\n#endif\nuniform float cameraNear;uniform float cameraFar;varying float vViewZ;varying vec4 vProjTexCoord;void main(){\n#include <clipping_planes_fragment>\nvec2 projTexCoord=(vProjTexCoord.xy/vProjTexCoord.w)*0.5+0.5;projTexCoord=clamp(projTexCoord,0.002,0.998);float fragCoordZ=unpackRGBAToDepth(texture2D(depthBuffer,projTexCoord));\n#ifdef PERSPECTIVE_CAMERA\nfloat viewZ=perspectiveDepthToViewZ(fragCoordZ,cameraNear,cameraFar);\n#else\nfloat viewZ=orthographicDepthToViewZ(fragCoordZ,cameraNear,cameraFar);\n#endif\nfloat depthTest=(-vViewZ>-viewZ)? 1.0 : 0.0;gl_FragColor.rg=vec2(0.0,depthTest);}";
 
@@ -719,9 +719,9 @@
 	    _this = _super.call(this, {
 	      type: "DepthComparisonMaterial",
 	      uniforms: {
-	        depthBuffer: new three.Uniform(depthTexture),
-	        cameraNear: new three.Uniform(0.3),
-	        cameraFar: new three.Uniform(1000)
+	        depthBuffer: new superThree.Uniform(depthTexture),
+	        cameraNear: new superThree.Uniform(0.3),
+	        cameraFar: new superThree.Uniform(1000)
 	      },
 	      fragmentShader: fragmentShader$5,
 	      vertexShader: vertexShader$3,
@@ -746,7 +746,7 @@
 	        this.uniforms.cameraNear.value = camera.near;
 	        this.uniforms.cameraFar.value = camera.far;
 
-	        if (camera instanceof three.PerspectiveCamera) {
+	        if (camera instanceof superThree.PerspectiveCamera) {
 	          this.defines.PERSPECTIVE_CAMERA = "1";
 	        } else {
 	          delete this.defines.PERSPECTIVE_CAMERA;
@@ -756,7 +756,7 @@
 	  }]);
 
 	  return DepthComparisonMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$6 = "#include <packing>\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nuniform highp sampler2D depthBuffer;\n#else\nuniform mediump sampler2D depthBuffer;\n#endif\n#ifdef DOWNSAMPLE_NORMALS\nuniform sampler2D normalBuffer;\n#endif\nvarying vec2 vUv0;varying vec2 vUv1;varying vec2 vUv2;varying vec2 vUv3;float readDepth(const in vec2 uv){\n#if DEPTH_PACKING == 3201\nreturn unpackRGBAToDepth(texture2D(depthBuffer,uv));\n#else\nreturn texture2D(depthBuffer,uv).r;\n#endif\n}/***Returns the index of the most representative depth in the 2x2 neighborhood.*/int findBestDepth(const in float samples[4]){float c=(samples[0]+samples[1]+samples[2]+samples[3])/4.0;float distances[4]=float[](abs(c-samples[0]),abs(c-samples[1]),abs(c-samples[2]),abs(c-samples[3]));float maxDistance=max(max(distances[0],distances[1]),max(distances[2],distances[3]));int remaining[3];int rejected[3];int i,j,k;for(i=0,j=0,k=0;i<4;++i){if(distances[i]<maxDistance){remaining[j++]=i;}else{rejected[k++]=i;}}for(;j<3;++j){remaining[j]=rejected[--k];}vec3 s=vec3(samples[remaining[0]],samples[remaining[1]],samples[remaining[2]]);c=(s.x+s.y+s.z)/3.0;distances[0]=abs(c-s.x);distances[1]=abs(c-s.y);distances[2]=abs(c-s.z);float minDistance=min(distances[0],min(distances[1],distances[2]));for(i=0;i<3;++i){if(distances[i]==minDistance){break;}}return remaining[i];}void main(){float d[4]=float[](readDepth(vUv0),readDepth(vUv1),readDepth(vUv2),readDepth(vUv3));int index=findBestDepth(d);\n#ifdef DOWNSAMPLE_NORMALS\nvec2 uvs[4]=vec2[](vUv0,vUv1,vUv2,vUv3);vec3 n=texture2D(normalBuffer,uvs[index]).rgb;\n#else\nvec3 n=vec3(0.0);\n#endif\ngl_FragColor=vec4(n,d[index]);}";
 
@@ -778,9 +778,9 @@
 	        DEPTH_PACKING: "0"
 	      },
 	      uniforms: {
-	        depthBuffer: new three.Uniform(null),
-	        normalBuffer: new three.Uniform(null),
-	        texelSize: new three.Uniform(new three.Vector2())
+	        depthBuffer: new superThree.Uniform(null),
+	        normalBuffer: new superThree.Uniform(null),
+	        texelSize: new superThree.Uniform(new superThree.Vector2())
 	      },
 	      fragmentShader: fragmentShader$6,
 	      vertexShader: vertexShader$4,
@@ -808,7 +808,7 @@
 	  }]);
 
 	  return DepthDownsamplingMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$7 = "#include <common>\n#include <packing>\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nuniform highp sampler2D depthBuffer0;uniform highp sampler2D depthBuffer1;\n#else\nuniform mediump sampler2D depthBuffer0;uniform mediump sampler2D depthBuffer1;\n#endif\nuniform sampler2D inputBuffer;varying vec2 vUv;void main(){\n#if DEPTH_PACKING_0 == 3201\nfloat d0=unpackRGBAToDepth(texture2D(depthBuffer0,vUv));\n#else\nfloat d0=texture2D(depthBuffer0,vUv).r;\n#endif\n#if DEPTH_PACKING_1 == 3201\nfloat d1=unpackRGBAToDepth(texture2D(depthBuffer1,vUv));\n#else\nfloat d1=texture2D(depthBuffer1,vUv).r;\n#endif\nif(d0<d1){discard;}gl_FragColor=texture2D(inputBuffer,vUv);}";
 
@@ -829,9 +829,9 @@
 	        DEPTH_PACKING_1: "0"
 	      },
 	      uniforms: {
-	        depthBuffer0: new three.Uniform(null),
-	        depthBuffer1: new three.Uniform(null),
-	        inputBuffer: new three.Uniform(null)
+	        depthBuffer0: new superThree.Uniform(null),
+	        depthBuffer1: new superThree.Uniform(null),
+	        inputBuffer: new superThree.Uniform(null)
 	      },
 	      fragmentShader: fragmentShader$7,
 	      vertexShader: vertexShader,
@@ -843,7 +843,7 @@
 	  }
 
 	  return DepthMaskMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShaderDepth = "#include <packing>\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nuniform highp sampler2D depthBuffer;\n#else\nuniform mediump sampler2D depthBuffer;\n#endif\nvarying vec2 vUv;varying vec2 vUv0;varying vec2 vUv1;float readDepth(const in vec2 uv){\n#if DEPTH_PACKING == 3201\nreturn unpackRGBAToDepth(texture2D(depthBuffer,uv));\n#else\nreturn texture2D(depthBuffer,uv).r;\n#endif\n}/***Gathers the current texel,and the top-left neighbors.*/vec3 gatherNeighbors(){float p=readDepth(vUv);float pLeft=readDepth(vUv0);float pTop=readDepth(vUv1);return vec3(p,pLeft,pTop);}void main(){const vec2 threshold=vec2(DEPTH_THRESHOLD);vec3 neighbors=gatherNeighbors();vec2 delta=abs(neighbors.xx-vec2(neighbors.y,neighbors.z));vec2 edges=step(threshold,delta);if(dot(edges,vec2(1.0))==0.0){discard;}gl_FragColor=vec4(edges,0.0,1.0);}";
 
@@ -857,7 +857,7 @@
 	  function EdgeDetectionMaterial() {
 	    var _this;
 
-	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new three.Vector2();
+	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new superThree.Vector2();
 	    var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : EdgeDetectionMode.COLOR;
 
 	    _classCallCheck(this, EdgeDetectionMaterial);
@@ -871,9 +871,9 @@
 	        DEPTH_PACKING: "0"
 	      },
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        depthBuffer: new three.Uniform(null),
-	        texelSize: new three.Uniform(texelSize)
+	        inputBuffer: new superThree.Uniform(null),
+	        depthBuffer: new superThree.Uniform(null),
+	        texelSize: new superThree.Uniform(texelSize)
 	      },
 	      vertexShader: vertexShader$1,
 	      depthWrite: false,
@@ -933,7 +933,7 @@
 	  }]);
 
 	  return EdgeDetectionMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 	var EdgeDetectionMode = {
 	  DEPTH: 0,
 	  LUMA: 1,
@@ -967,14 +967,14 @@
 	        ENCODE_OUTPUT: "1"
 	      },
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        depthBuffer: new three.Uniform(null),
-	        resolution: new three.Uniform(new three.Vector2()),
-	        texelSize: new three.Uniform(new three.Vector2()),
-	        cameraNear: new three.Uniform(0.3),
-	        cameraFar: new three.Uniform(1000.0),
-	        aspect: new three.Uniform(1.0),
-	        time: new three.Uniform(0.0)
+	        inputBuffer: new superThree.Uniform(null),
+	        depthBuffer: new superThree.Uniform(null),
+	        resolution: new superThree.Uniform(new superThree.Vector2()),
+	        texelSize: new superThree.Uniform(new superThree.Vector2()),
+	        cameraNear: new superThree.Uniform(0.3),
+	        cameraFar: new superThree.Uniform(1000.0),
+	        aspect: new superThree.Uniform(1.0),
+	        time: new superThree.Uniform(0.0)
 	      },
 	      depthWrite: false,
 	      depthTest: false,
@@ -1055,7 +1055,7 @@
 	        this.uniforms.cameraNear.value = camera.near;
 	        this.uniforms.cameraFar.value = camera.far;
 
-	        if (camera instanceof three.PerspectiveCamera) {
+	        if (camera instanceof superThree.PerspectiveCamera) {
 	          this.defines.PERSPECTIVE_CAMERA = "1";
 	        } else {
 	          delete this.defines.PERSPECTIVE_CAMERA;
@@ -1085,7 +1085,7 @@
 	  }]);
 
 	  return EffectMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 	var Section = {
 	  FRAGMENT_HEAD: "FRAGMENT_HEAD",
 	  FRAGMENT_MAIN_UV: "FRAGMENT_MAIN_UV",
@@ -1113,13 +1113,13 @@
 	        SAMPLES_FLOAT: "60.0"
 	      },
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        lightPosition: new three.Uniform(lightPosition),
-	        density: new three.Uniform(1.0),
-	        decay: new three.Uniform(1.0),
-	        weight: new three.Uniform(1.0),
-	        exposure: new three.Uniform(1.0),
-	        clampMax: new three.Uniform(1.0)
+	        inputBuffer: new superThree.Uniform(null),
+	        lightPosition: new superThree.Uniform(lightPosition),
+	        density: new superThree.Uniform(1.0),
+	        decay: new superThree.Uniform(1.0),
+	        weight: new superThree.Uniform(1.0),
+	        exposure: new superThree.Uniform(1.0),
+	        clampMax: new superThree.Uniform(1.0)
 	      },
 	      fragmentShader: fragmentShader$8,
 	      vertexShader: vertexShader,
@@ -1144,7 +1144,7 @@
 	  }]);
 
 	  return GodRaysMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$9 = "#include <common>\nuniform sampler2D inputBuffer;\n#ifdef RANGE\nuniform vec2 range;\n#elif defined(THRESHOLD)\nuniform float threshold;uniform float smoothing;\n#endif\nvarying vec2 vUv;void main(){vec4 texel=texture2D(inputBuffer,vUv);float l=linearToRelativeLuminance(texel.rgb);\n#ifdef RANGE\nfloat low=step(range.x,l);float high=step(l,range.y);l*=low*high;\n#elif defined(THRESHOLD)\nl=smoothstep(threshold,threshold+smoothing,l);\n#endif\n#ifdef COLOR\ngl_FragColor=vec4(texel.rgb*l,l);\n#else\ngl_FragColor=vec4(l);\n#endif\n}";
 
@@ -1165,10 +1165,10 @@
 	    _this = _super.call(this, {
 	      type: "LuminanceMaterial",
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        threshold: new three.Uniform(0.0),
-	        smoothing: new three.Uniform(1.0),
-	        range: new three.Uniform(useRange ? luminanceRange : new three.Vector2())
+	        inputBuffer: new superThree.Uniform(null),
+	        threshold: new superThree.Uniform(0.0),
+	        smoothing: new superThree.Uniform(1.0),
+	        range: new superThree.Uniform(useRange ? luminanceRange : new superThree.Vector2())
 	      },
 	      fragmentShader: fragmentShader$9,
 	      vertexShader: vertexShader,
@@ -1261,7 +1261,7 @@
 	  }]);
 
 	  return LuminanceMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$a = "uniform sampler2D maskTexture;uniform sampler2D inputBuffer;\n#if MASK_FUNCTION != 0\nuniform float strength;\n#endif\nvarying vec2 vUv;void main(){\n#if COLOR_CHANNEL == 0\nfloat mask=texture2D(maskTexture,vUv).r;\n#elif COLOR_CHANNEL == 1\nfloat mask=texture2D(maskTexture,vUv).g;\n#elif COLOR_CHANNEL == 2\nfloat mask=texture2D(maskTexture,vUv).b;\n#else\nfloat mask=texture2D(maskTexture,vUv).a;\n#endif\n#if MASK_FUNCTION == 0\n#ifdef INVERTED\nif(mask>0.0){discard;}\n#else\nif(mask==0.0){discard;}\n#endif\n#else\nmask=clamp(mask*strength,0.0,1.0);\n#ifdef INVERTED\nmask=(1.0-mask);\n#endif\n#if MASK_FUNCTION == 1\ngl_FragColor=mask*texture2D(inputBuffer,vUv);\n#else\ngl_FragColor=vec4(mask*texture2D(inputBuffer,vUv).rgb,mask);\n#endif\n#endif\n}";
 
@@ -1280,9 +1280,9 @@
 	    _this = _super.call(this, {
 	      type: "MaskMaterial",
 	      uniforms: {
-	        maskTexture: new three.Uniform(maskTexture),
-	        inputBuffer: new three.Uniform(null),
-	        strength: new three.Uniform(1.0)
+	        maskTexture: new superThree.Uniform(maskTexture),
+	        inputBuffer: new superThree.Uniform(null),
+	        strength: new superThree.Uniform(1.0)
 	      },
 	      fragmentShader: fragmentShader$a,
 	      vertexShader: vertexShader,
@@ -1337,7 +1337,7 @@
 	  }]);
 
 	  return MaskMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 	var MaskFunction = {
 	  DISCARD: 0,
 	  MULTIPLY: 1,
@@ -1356,15 +1356,15 @@
 	  function OutlineMaterial() {
 	    var _this;
 
-	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new three.Vector2();
+	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new superThree.Vector2();
 
 	    _classCallCheck(this, OutlineMaterial);
 
 	    _this = _super.call(this, {
 	      type: "OutlineMaterial",
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        texelSize: new three.Uniform(new three.Vector2())
+	        inputBuffer: new superThree.Uniform(null),
+	        texelSize: new superThree.Uniform(new superThree.Vector2())
 	      },
 	      fragmentShader: fragmentShader$b,
 	      vertexShader: vertexShader$5,
@@ -1387,7 +1387,7 @@
 	  }]);
 
 	  return OutlineMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 	var OutlineEdgesMaterial = OutlineMaterial;
 
 	var fragmentShader$c = "#define sampleLevelZeroOffset(t, coord, offset) texture2D(t, coord + offset * texelSize)\n#if __VERSION__ < 300\n#define round(v) floor(v + 0.5)\n#endif\nuniform sampler2D inputBuffer;uniform sampler2D areaTexture;uniform sampler2D searchTexture;uniform vec2 texelSize;uniform vec2 resolution;varying vec2 vUv;varying vec4 vOffset[3];varying vec2 vPixCoord;/***Moves values to a target vector based on a given conditional vector.*/void movec(const in bvec2 c,inout vec2 variable,const in vec2 value){if(c.x){variable.x=value.x;}if(c.y){variable.y=value.y;}}void movec(const in bvec4 c,inout vec4 variable,const in vec4 value){movec(c.xy,variable.xy,value.xy);movec(c.zw,variable.zw,value.zw);}/***Allows to decode two binary values from a bilinear-filtered access.**Bilinear access for fetching 'e' have a 0.25 offset,and we are interested*in the R and G edges:**+---G---+-------+*|x o R   x|*+-------+-------+**Then,if one of these edge is enabled:*Red:(0.75*X+0.25*1)=>0.25 or 1.0*Green:(0.75*1+0.25*X)=>0.75 or 1.0**This function will unpack the values(mad+mul+round):*wolframalpha.com: round(x*abs(5*x-5*0.75))plot 0 to 1*/vec2 decodeDiagBilinearAccess(in vec2 e){e.r=e.r*abs(5.0*e.r-5.0*0.75);return round(e);}vec4 decodeDiagBilinearAccess(in vec4 e){e.rb=e.rb*abs(5.0*e.rb-5.0*0.75);return round(e);}/***Diagonal pattern searches.*/vec2 searchDiag1(const in vec2 texCoord,const in vec2 dir,out vec2 e){vec4 coord=vec4(texCoord,-1.0,1.0);vec3 t=vec3(texelSize,1.0);for(int i=0;i<MAX_SEARCH_STEPS_INT;++i){if(!(coord.z<float(MAX_SEARCH_STEPS_DIAG_INT-1)&&coord.w>0.9)){break;}coord.xyz=t*vec3(dir,1.0)+coord.xyz;e=texture2D(inputBuffer,coord.xy).rg;coord.w=dot(e,vec2(0.5));}return coord.zw;}vec2 searchDiag2(const in vec2 texCoord,const in vec2 dir,out vec2 e){vec4 coord=vec4(texCoord,-1.0,1.0);coord.x+=0.25*texelSize.x;vec3 t=vec3(texelSize,1.0);for(int i=0;i<MAX_SEARCH_STEPS_INT;++i){if(!(coord.z<float(MAX_SEARCH_STEPS_DIAG_INT-1)&&coord.w>0.9)){break;}coord.xyz=t*vec3(dir,1.0)+coord.xyz;e=texture2D(inputBuffer,coord.xy).rg;e=decodeDiagBilinearAccess(e);coord.w=dot(e,vec2(0.5));}return coord.zw;}/***Calculates the area corresponding to a certain diagonal distance and crossing*edges 'e'.*/vec2 areaDiag(const in vec2 dist,const in vec2 e,const in float offset){vec2 texCoord=vec2(AREATEX_MAX_DISTANCE_DIAG,AREATEX_MAX_DISTANCE_DIAG)*e+dist;texCoord=AREATEX_PIXEL_SIZE*texCoord+0.5*AREATEX_PIXEL_SIZE;texCoord.x+=0.5;texCoord.y+=AREATEX_SUBTEX_SIZE*offset;return texture2D(areaTexture,texCoord).rg;}/***Searches for diagonal patterns and returns the corresponding weights.*/vec2 calculateDiagWeights(const in vec2 texCoord,const in vec2 e,const in vec4 subsampleIndices){vec2 weights=vec2(0.0);vec4 d;vec2 end;if(e.r>0.0){d.xz=searchDiag1(texCoord,vec2(-1.0,1.0),end);d.x+=float(end.y>0.9);}else{d.xz=vec2(0.0);}d.yw=searchDiag1(texCoord,vec2(1.0,-1.0),end);if(d.x+d.y>2.0){vec4 coords=vec4(-d.x+0.25,d.x,d.y,-d.y-0.25)*texelSize.xyxy+texCoord.xyxy;vec4 c;c.xy=sampleLevelZeroOffset(inputBuffer,coords.xy,vec2(-1,0)).rg;c.zw=sampleLevelZeroOffset(inputBuffer,coords.zw,vec2(1,0)).rg;c.yxwz=decodeDiagBilinearAccess(c.xyzw);vec2 cc=vec2(2.0)*c.xz+c.yw;movec(bvec2(step(0.9,d.zw)),cc,vec2(0.0));weights+=areaDiag(d.xy,cc,subsampleIndices.z);}d.xz=searchDiag2(texCoord,vec2(-1.0,-1.0),end);if(sampleLevelZeroOffset(inputBuffer,texCoord,vec2(1,0)).r>0.0){d.yw=searchDiag2(texCoord,vec2(1.0),end);d.y+=float(end.y>0.9);}else{d.yw=vec2(0.0);}if(d.x+d.y>2.0){vec4 coords=vec4(-d.x,-d.x,d.y,d.y)*texelSize.xyxy+texCoord.xyxy;vec4 c;c.x=sampleLevelZeroOffset(inputBuffer,coords.xy,vec2(-1,0)).g;c.y=sampleLevelZeroOffset(inputBuffer,coords.xy,vec2(0,-1)).r;c.zw=sampleLevelZeroOffset(inputBuffer,coords.zw,vec2(1,0)).gr;vec2 cc=vec2(2.0)*c.xz+c.yw;movec(bvec2(step(0.9,d.zw)),cc,vec2(0.0));weights+=areaDiag(d.xy,cc,subsampleIndices.w).gr;}return weights;}/***Determines how much length should be added in the last step of the searches.**Takes the bilinearly interpolated edge(see @PSEUDO_GATHER4),and adds 0,1*or 2 depending on which edges and crossing edges are active.*/float searchLength(const in vec2 e,const in float offset){/*The texture is flipped vertically,with left and right cases taking halfof the space horizontally.*/vec2 scale=SEARCHTEX_SIZE*vec2(0.5,-1.0);vec2 bias=SEARCHTEX_SIZE*vec2(offset,1.0);scale+=vec2(-1.0,1.0);bias+=vec2(0.5,-0.5);scale*=1.0/SEARCHTEX_PACKED_SIZE;bias*=1.0/SEARCHTEX_PACKED_SIZE;return texture2D(searchTexture,scale*e+bias).r;}/***Horizontal search for the second pass.*/float searchXLeft(in vec2 texCoord,const in float end){/*@PSEUDO_GATHER4This texCoord has been offset by(-0.25,-0.125)in the vertex shader tosample between edges,thus fetching four edges in a row.Sampling with different offsets in each direction allows to disambiguatewhich edges are active from the four fetched ones.*/vec2 e=vec2(0.0,1.0);for(int i=0;i<MAX_SEARCH_STEPS_INT;++i){if(!(texCoord.x>end&&e.g>0.8281&&e.r==0.0)){break;}e=texture2D(inputBuffer,texCoord).rg;texCoord=vec2(-2.0,0.0)*texelSize+texCoord;}float offset=-(255.0/127.0)*searchLength(e,0.0)+3.25;return texelSize.x*offset+texCoord.x;}float searchXRight(vec2 texCoord,const in float end){vec2 e=vec2(0.0,1.0);for(int i=0;i<MAX_SEARCH_STEPS_INT;++i){if(!(texCoord.x<end&&e.g>0.8281&&e.r==0.0)){break;}e=texture2D(inputBuffer,texCoord).rg;texCoord=vec2(2.0,0.0)*texelSize.xy+texCoord;}float offset=-(255.0/127.0)*searchLength(e,0.5)+3.25;return-texelSize.x*offset+texCoord.x;}/***Vertical search for the second pass.*/float searchYUp(vec2 texCoord,const in float end){vec2 e=vec2(1.0,0.0);for(int i=0;i<MAX_SEARCH_STEPS_INT;++i){if(!(texCoord.y>end&&e.r>0.8281&&e.g==0.0)){break;}e=texture2D(inputBuffer,texCoord).rg;texCoord=-vec2(0.0,2.0)*texelSize.xy+texCoord;}float offset=-(255.0/127.0)*searchLength(e.gr,0.0)+3.25;return texelSize.y*offset+texCoord.y;}float searchYDown(vec2 texCoord,const in float end){vec2 e=vec2(1.0,0.0);for(int i=0;i<MAX_SEARCH_STEPS_INT;i++){if(!(texCoord.y<end&&e.r>0.8281&&e.g==0.0)){break;}e=texture2D(inputBuffer,texCoord).rg;texCoord=vec2(0.0,2.0)*texelSize.xy+texCoord;}float offset=-(255.0/127.0)*searchLength(e.gr,0.5)+3.25;return-texelSize.y*offset+texCoord.y;}/***Determines the areas at each side of the current edge.*/vec2 area(const in vec2 dist,const in float e1,const in float e2,const in float offset){vec2 texCoord=vec2(AREATEX_MAX_DISTANCE)*round(4.0*vec2(e1,e2))+dist;texCoord=AREATEX_PIXEL_SIZE*texCoord+0.5*AREATEX_PIXEL_SIZE;texCoord.y=AREATEX_SUBTEX_SIZE*offset+texCoord.y;return texture2D(areaTexture,texCoord).rg;}/***Corner detection.*/void detectHorizontalCornerPattern(inout vec2 weights,const in vec4 texCoord,const in vec2 d){\n#if !defined(DISABLE_CORNER_DETECTION)\nvec2 leftRight=step(d.xy,d.yx);vec2 rounding=(1.0-CORNER_ROUNDING_NORM)*leftRight;rounding/=leftRight.x+leftRight.y;vec2 factor=vec2(1.0);factor.x-=rounding.x*sampleLevelZeroOffset(inputBuffer,texCoord.xy,vec2(0,1)).r;factor.x-=rounding.y*sampleLevelZeroOffset(inputBuffer,texCoord.zw,vec2(1,1)).r;factor.y-=rounding.x*sampleLevelZeroOffset(inputBuffer,texCoord.xy,vec2(0,-2)).r;factor.y-=rounding.y*sampleLevelZeroOffset(inputBuffer,texCoord.zw,vec2(1,-2)).r;weights*=clamp(factor,0.0,1.0);\n#endif\n}void detectVerticalCornerPattern(inout vec2 weights,const in vec4 texCoord,const in vec2 d){\n#if !defined(DISABLE_CORNER_DETECTION)\nvec2 leftRight=step(d.xy,d.yx);vec2 rounding=(1.0-CORNER_ROUNDING_NORM)*leftRight;rounding/=leftRight.x+leftRight.y;vec2 factor=vec2(1.0);factor.x-=rounding.x*sampleLevelZeroOffset(inputBuffer,texCoord.xy,vec2(1,0)).g;factor.x-=rounding.y*sampleLevelZeroOffset(inputBuffer,texCoord.zw,vec2(1,1)).g;factor.y-=rounding.x*sampleLevelZeroOffset(inputBuffer,texCoord.xy,vec2(-2,0)).g;factor.y-=rounding.y*sampleLevelZeroOffset(inputBuffer,texCoord.zw,vec2(-2,1)).g;weights*=clamp(factor,0.0,1.0);\n#endif\n}void main(){vec4 weights=vec4(0.0);vec4 subsampleIndices=vec4(0.0);vec2 e=texture2D(inputBuffer,vUv).rg;if(e.g>0.0){\n#if !defined(DISABLE_DIAG_DETECTION)\n/*Diagonals have both north and west edges,so searching for them in one ofthe boundaries is enough.*/weights.rg=calculateDiagWeights(vUv,e,subsampleIndices);if(weights.r==-weights.g){\n#endif\nvec2 d;vec3 coords;coords.x=searchXLeft(vOffset[0].xy,vOffset[2].x);coords.y=vOffset[1].y;d.x=coords.x;/*Now fetch the left crossing edges,two at a time using bilinearfiltering. Sampling at-0.25(see @CROSSING_OFFSET)enables to discern whatvalue each edge has.*/float e1=texture2D(inputBuffer,coords.xy).r;coords.z=searchXRight(vOffset[0].zw,vOffset[2].y);d.y=coords.z;/*Translate distances to pixel units for better interleave arithmetic andmemory accesses.*/d=round(resolution.xx*d+-vPixCoord.xx);vec2 sqrtD=sqrt(abs(d));float e2=sampleLevelZeroOffset(inputBuffer,coords.zy,vec2(1,0)).r;weights.rg=area(sqrtD,e1,e2,subsampleIndices.y);coords.y=vUv.y;detectHorizontalCornerPattern(weights.rg,coords.xyzy,d);\n#if !defined(DISABLE_DIAG_DETECTION)\n}else{e.r=0.0;}\n#endif\n}if(e.r>0.0){vec2 d;vec3 coords;coords.y=searchYUp(vOffset[1].xy,vOffset[2].z);coords.x=vOffset[0].x;d.x=coords.y;float e1=texture2D(inputBuffer,coords.xy).g;coords.z=searchYDown(vOffset[1].zw,vOffset[2].w);d.y=coords.z;d=round(resolution.yy*d-vPixCoord.yy);vec2 sqrtD=sqrt(abs(d));float e2=sampleLevelZeroOffset(inputBuffer,coords.xz,vec2(0,1)).g;weights.ba=area(sqrtD,e1,e2,subsampleIndices.x);coords.x=vUv.x;detectVerticalCornerPattern(weights.ba,coords.xyxz,d);}gl_FragColor=weights;}";
@@ -1402,8 +1402,8 @@
 	  function SMAAWeightsMaterial() {
 	    var _this;
 
-	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new three.Vector2();
-	    var resolution = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new three.Vector2();
+	    var texelSize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new superThree.Vector2();
+	    var resolution = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new superThree.Vector2();
 
 	    _classCallCheck(this, SMAAWeightsMaterial);
 
@@ -1424,11 +1424,11 @@
 	        SEARCHTEX_PACKED_SIZE: "vec2(64.0, 16.0)"
 	      },
 	      uniforms: {
-	        inputBuffer: new three.Uniform(null),
-	        areaTexture: new three.Uniform(null),
-	        searchTexture: new three.Uniform(null),
-	        texelSize: new three.Uniform(texelSize),
-	        resolution: new three.Uniform(resolution)
+	        inputBuffer: new superThree.Uniform(null),
+	        areaTexture: new superThree.Uniform(null),
+	        searchTexture: new superThree.Uniform(null),
+	        texelSize: new superThree.Uniform(texelSize),
+	        resolution: new superThree.Uniform(resolution)
 	      },
 	      fragmentShader: fragmentShader$c,
 	      vertexShader: vertexShader$6,
@@ -1494,7 +1494,7 @@
 	  }]);
 
 	  return SMAAWeightsMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var fragmentShader$d = "#include <common>\n#include <packing>\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nuniform highp sampler2D normalDepthBuffer;\n#else\nuniform mediump sampler2D normalDepthBuffer;\n#endif\n#ifndef NORMAL_DEPTH\nuniform sampler2D normalBuffer;float readDepth(const in vec2 uv){\n#if DEPTH_PACKING == 3201\nreturn unpackRGBAToDepth(texture2D(normalDepthBuffer,uv));\n#else\nreturn texture2D(normalDepthBuffer,uv).r;\n#endif\n}\n#endif\nuniform sampler2D noiseTexture;uniform mat4 inverseProjectionMatrix;uniform mat4 projectionMatrix;uniform vec2 texelSize;uniform float cameraNear;uniform float cameraFar;uniform float minRadiusScale;uniform float intensity;uniform float fade;uniform float bias;uniform vec2 distanceCutoff;uniform vec2 proximityCutoff;varying vec2 vUv;varying vec2 vUv2;float getViewZ(const in float depth){\n#ifdef PERSPECTIVE_CAMERA\nreturn perspectiveDepthToViewZ(depth,cameraNear,cameraFar);\n#else\nreturn orthographicDepthToViewZ(depth,cameraNear,cameraFar);\n#endif\n}vec3 getViewPosition(const in vec2 screenPosition,const in float depth,const in float viewZ){float clipW=projectionMatrix[2][3]*viewZ+projectionMatrix[3][3];vec4 clipPosition=vec4((vec3(screenPosition,depth)-0.5)*2.0,1.0);clipPosition*=clipW;return(inverseProjectionMatrix*clipPosition).xyz;}float getAmbientOcclusion(const in vec3 p,const in vec3 n,const in float depth,const in vec2 uv){\n#ifdef DISTANCE_SCALING\nfloat radiusScale=1.0-smoothstep(0.0,distanceCutoff.y,depth);radiusScale=radiusScale*(1.0-minRadiusScale)+minRadiusScale;float radius=RADIUS*radiusScale;\n#else\nfloat radius=RADIUS;\n#endif\nfloat noise=texture2D(noiseTexture,vUv2).r;float baseAngle=noise*PI2;float inv_samples=1.0/SAMPLES_FLOAT;float rings=SPIRAL_TURNS*PI2;float occlusion=0.0;int taps=0;for(int i=0;i<SAMPLES_INT;++i){float alpha=(float(i)+0.5)*inv_samples;float angle=alpha*rings+baseAngle;vec2 coord=alpha*radius*vec2(cos(angle),sin(angle))*texelSize+uv;if(coord.s<0.0||coord.s>1.0||coord.t<0.0||coord.t>1.0){continue;}\n#ifdef NORMAL_DEPTH\nfloat sampleDepth=texture2D(normalDepthBuffer,coord).a;\n#else\nfloat sampleDepth=readDepth(coord);\n#endif\nfloat viewZ=getViewZ(sampleDepth);\n#ifdef PERSPECTIVE_CAMERA\nfloat linearSampleDepth=viewZToOrthographicDepth(viewZ,cameraNear,cameraFar);\n#else\nfloat linearSampleDepth=sampleDepth;\n#endif\nfloat proximity=abs(depth-linearSampleDepth);if(proximity<proximityCutoff.y){float falloff=1.0-smoothstep(proximityCutoff.x,proximityCutoff.y,proximity);vec3 Q=getViewPosition(coord,sampleDepth,viewZ);vec3 v=Q-p;float vv=dot(v,v);float vn=dot(v,n)-bias;float f=max(RADIUS_SQ-vv,0.0)/RADIUS_SQ;occlusion+=(f*f*f*max(vn/(fade+vv),0.0))*falloff;}++taps;}return occlusion/(4.0*max(float(taps),1.0));}void main(){\n#ifdef NORMAL_DEPTH\nvec4 normalDepth=texture2D(normalDepthBuffer,vUv);\n#else\nvec4 normalDepth=vec4(texture2D(normalBuffer,vUv).rgb,readDepth(vUv));\n#endif\nfloat ao=1.0;float depth=normalDepth.a;float viewZ=getViewZ(depth);\n#ifdef PERSPECTIVE_CAMERA\nfloat linearDepth=viewZToOrthographicDepth(viewZ,cameraNear,cameraFar);\n#else\nfloat linearDepth=depth;\n#endif\nif(linearDepth<distanceCutoff.y){vec3 viewPosition=getViewPosition(vUv,depth,viewZ);vec3 viewNormal=unpackRGBToNormal(normalDepth.rgb);ao-=getAmbientOcclusion(viewPosition,viewNormal,linearDepth,vUv);float d=smoothstep(distanceCutoff.x,distanceCutoff.y,linearDepth);ao=mix(ao,1.0,d);ao=clamp(pow(ao,abs(intensity)),0.0,1.0);}gl_FragColor.r=ao;}";
 
@@ -1522,21 +1522,21 @@
 	        DEPTH_PACKING: "0"
 	      },
 	      uniforms: {
-	        normalBuffer: new three.Uniform(null),
-	        normalDepthBuffer: new three.Uniform(null),
-	        noiseTexture: new three.Uniform(null),
-	        inverseProjectionMatrix: new three.Uniform(new three.Matrix4()),
-	        projectionMatrix: new three.Uniform(new three.Matrix4()),
-	        texelSize: new three.Uniform(new three.Vector2()),
-	        cameraNear: new three.Uniform(0.0),
-	        cameraFar: new three.Uniform(0.0),
-	        distanceCutoff: new three.Uniform(new three.Vector2()),
-	        proximityCutoff: new three.Uniform(new three.Vector2()),
-	        noiseScale: new three.Uniform(new three.Vector2()),
-	        minRadiusScale: new three.Uniform(0.33),
-	        intensity: new three.Uniform(1.0),
-	        fade: new three.Uniform(0.01),
-	        bias: new three.Uniform(0.0)
+	        normalBuffer: new superThree.Uniform(null),
+	        normalDepthBuffer: new superThree.Uniform(null),
+	        noiseTexture: new superThree.Uniform(null),
+	        inverseProjectionMatrix: new superThree.Uniform(new superThree.Matrix4()),
+	        projectionMatrix: new superThree.Uniform(new superThree.Matrix4()),
+	        texelSize: new superThree.Uniform(new superThree.Vector2()),
+	        cameraNear: new superThree.Uniform(0.0),
+	        cameraFar: new superThree.Uniform(0.0),
+	        distanceCutoff: new superThree.Uniform(new superThree.Vector2()),
+	        proximityCutoff: new superThree.Uniform(new superThree.Vector2()),
+	        noiseScale: new superThree.Uniform(new superThree.Vector2()),
+	        minRadiusScale: new superThree.Uniform(0.33),
+	        intensity: new superThree.Uniform(1.0),
+	        fade: new superThree.Uniform(0.01),
+	        bias: new superThree.Uniform(0.0)
 	      },
 	      fragmentShader: fragmentShader$d,
 	      vertexShader: vertexShader$7,
@@ -1565,7 +1565,7 @@
 	        uniforms.cameraNear.value = camera.near;
 	        uniforms.cameraFar.value = camera.far;
 
-	        if (camera instanceof three.PerspectiveCamera) {
+	        if (camera instanceof superThree.PerspectiveCamera) {
 	          this.defines.PERSPECTIVE_CAMERA = "1";
 	        } else {
 	          delete this.defines.PERSPECTIVE_CAMERA;
@@ -1586,7 +1586,7 @@
 	  }]);
 
 	  return SSAOMaterial;
-	}(three.ShaderMaterial);
+	}(superThree.ShaderMaterial);
 
 	var AUTO_SIZE = -1;
 	var Resizer = function () {
@@ -1598,8 +1598,8 @@
 	    _classCallCheck(this, Resizer);
 
 	    this.resizable = resizable;
-	    this.base = new three.Vector2(1, 1);
-	    this.target = new three.Vector2(width, height);
+	    this.base = new superThree.Vector2(1, 1);
+	    this.target = new superThree.Vector2(width, height);
 	    this.s = scale;
 	  }
 
@@ -1666,21 +1666,21 @@
 	  return Resizer;
 	}();
 
-	var dummyCamera = new three.Camera();
+	var dummyCamera = new superThree.Camera();
 	var geometry = null;
 
 	function getFullscreenTriangle() {
 	  if (geometry === null) {
 	    var vertices = new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]);
 	    var uvs = new Float32Array([0, 0, 2, 0, 0, 2]);
-	    geometry = new three.BufferGeometry();
+	    geometry = new superThree.BufferGeometry();
 
 	    if (geometry.setAttribute !== undefined) {
-	      geometry.setAttribute("position", new three.BufferAttribute(vertices, 3));
-	      geometry.setAttribute("uv", new three.BufferAttribute(uvs, 2));
+	      geometry.setAttribute("position", new superThree.BufferAttribute(vertices, 3));
+	      geometry.setAttribute("uv", new superThree.BufferAttribute(uvs, 2));
 	    } else {
-	      geometry.addAttribute("position", new three.BufferAttribute(vertices, 3));
-	      geometry.addAttribute("uv", new three.BufferAttribute(uvs, 2));
+	      geometry.addAttribute("position", new superThree.BufferAttribute(vertices, 3));
+	      geometry.addAttribute("uv", new superThree.BufferAttribute(uvs, 2));
 	    }
 	  }
 
@@ -1690,7 +1690,7 @@
 	var Pass = function () {
 	  function Pass() {
 	    var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "Pass";
-	    var scene = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new three.Scene();
+	    var scene = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new superThree.Scene();
 	    var camera = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : dummyCamera;
 
 	    _classCallCheck(this, Pass);
@@ -1718,11 +1718,11 @@
 	      if (screen !== null) {
 	        screen.material = material;
 	      } else {
-	        screen = new three.Mesh(getFullscreenTriangle(), material);
+	        screen = new superThree.Mesh(getFullscreenTriangle(), material);
 	        screen.frustumCulled = false;
 
 	        if (this.scene === null) {
-	          this.scene = new three.Scene();
+	          this.scene = new superThree.Scene();
 	        }
 
 	        this.scene.add(screen);
@@ -1808,9 +1808,9 @@
 	    _classCallCheck(this, BlurPass);
 
 	    _this = _super.call(this, "BlurPass");
-	    _this.renderTargetA = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.renderTargetA = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false
 	    });
@@ -1886,9 +1886,9 @@
 	  }, {
 	    key: "initialize",
 	    value: function initialize(renderer, alpha, frameBufferType) {
-	      if (!alpha && frameBufferType === three.UnsignedByteType) {
-	        this.renderTargetA.texture.format = three.RGBFormat;
-	        this.renderTargetB.texture.format = three.RGBFormat;
+	      if (!alpha && frameBufferType === superThree.UnsignedByteType) {
+	        this.renderTargetA.texture.format = superThree.RGBFormat;
+	        this.renderTargetB.texture.format = superThree.RGBFormat;
 	      }
 
 	      if (frameBufferType !== undefined) {
@@ -1967,7 +1967,7 @@
 	  return ClearMaskPass;
 	}(Pass);
 
-	var color = new three.Color();
+	var color = new superThree.Color();
 	var ClearPass = function (_Pass) {
 	  _inherits(ClearPass, _Pass);
 
@@ -2258,22 +2258,22 @@
 
 	    _this = _super.call(this, "DepthPass");
 	    _this.needsSwap = false;
-	    _this.renderPass = new RenderPass(scene, camera, new three.MeshDepthMaterial({
-	      depthPacking: three.RGBADepthPacking,
+	    _this.renderPass = new RenderPass(scene, camera, new superThree.MeshDepthMaterial({
+	      depthPacking: superThree.RGBADepthPacking,
 	      morphTargets: true,
 	      skinning: true
 	    }));
 
 	    var clearPass = _this.renderPass.getClearPass();
 
-	    clearPass.overrideClearColor = new three.Color(0xffffff);
+	    clearPass.overrideClearColor = new superThree.Color(0xffffff);
 	    clearPass.overrideClearAlpha = 1.0;
 	    _this.renderTarget = renderTarget;
 
 	    if (_this.renderTarget === undefined) {
-	      _this.renderTarget = new three.WebGLRenderTarget(1, 1, {
-	        minFilter: three.NearestFilter,
-	        magFilter: three.NearestFilter,
+	      _this.renderTarget = new superThree.WebGLRenderTarget(1, 1, {
+	        minFilter: superThree.NearestFilter,
+	        magFilter: superThree.NearestFilter,
 	        stencilBuffer: false
 	      });
 	      _this.renderTarget.texture.name = "DepthPass.Target";
@@ -2351,12 +2351,12 @@
 	      material.defines.DOWNSAMPLE_NORMALS = "1";
 	    }
 
-	    _this.renderTarget = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.NearestFilter,
-	      magFilter: three.NearestFilter,
+	    _this.renderTarget = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.NearestFilter,
+	      magFilter: superThree.NearestFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false,
-	      type: three.FloatType
+	      type: superThree.FloatType
 	    });
 	    _this.renderTarget.texture.name = "DepthDownsamplingPass.Target";
 	    _this.renderTarget.texture.generateMipmaps = false;
@@ -2477,7 +2477,7 @@
 
 	    _this = _super.call(this);
 	    _this.blendFunction = blendFunction;
-	    _this.opacity = new three.Uniform(opacity);
+	    _this.opacity = new superThree.Uniform(opacity);
 	    return _this;
 	  }
 
@@ -2502,7 +2502,7 @@
 	  }]);
 
 	  return BlendMode;
-	}(three.EventDispatcher);
+	}(superThree.EventDispatcher);
 
 	var Effect = function (_EventDispatcher) {
 	  _inherits(Effect, _EventDispatcher);
@@ -2612,7 +2612,7 @@
 	  }]);
 
 	  return Effect;
-	}(three.EventDispatcher);
+	}(superThree.EventDispatcher);
 	var EffectAttribute = {
 	  NONE: 0,
 	  DEPTH: 1,
@@ -3188,7 +3188,7 @@
 
 	    _this = _super.call(this, "NormalPass");
 	    _this.needsSwap = false;
-	    _this.renderPass = new RenderPass(scene, camera, new three.MeshNormalMaterial({
+	    _this.renderPass = new RenderPass(scene, camera, new superThree.MeshNormalMaterial({
 	      morphTargets: true,
 	      morphNormals: true,
 	      skinning: true
@@ -3196,15 +3196,15 @@
 
 	    var clearPass = _this.renderPass.getClearPass();
 
-	    clearPass.overrideClearColor = new three.Color(0x7777ff);
+	    clearPass.overrideClearColor = new superThree.Color(0x7777ff);
 	    clearPass.overrideClearAlpha = 1.0;
 	    _this.renderTarget = renderTarget;
 
 	    if (_this.renderTarget === undefined) {
-	      _this.renderTarget = new three.WebGLRenderTarget(1, 1, {
-	        minFilter: three.NearestFilter,
-	        magFilter: three.NearestFilter,
-	        format: three.RGBFormat,
+	      _this.renderTarget = new superThree.WebGLRenderTarget(1, 1, {
+	        minFilter: superThree.NearestFilter,
+	        magFilter: superThree.NearestFilter,
+	        format: superThree.RGBFormat,
 	        stencilBuffer: false
 	      });
 	      _this.renderTarget.texture.name = "NormalPass.Target";
@@ -3268,9 +3268,9 @@
 	    _this.renderTarget = renderTarget;
 
 	    if (renderTarget === undefined) {
-	      _this.renderTarget = new three.WebGLRenderTarget(1, 1, {
-	        minFilter: three.LinearFilter,
-	        magFilter: three.LinearFilter,
+	      _this.renderTarget = new superThree.WebGLRenderTarget(1, 1, {
+	        minFilter: superThree.LinearFilter,
+	        magFilter: superThree.LinearFilter,
 	        stencilBuffer: false,
 	        depthBuffer: false
 	      });
@@ -3300,8 +3300,8 @@
 	  }, {
 	    key: "initialize",
 	    value: function initialize(renderer, alpha, frameBufferType) {
-	      if (!alpha && frameBufferType === three.UnsignedByteType) {
-	        this.renderTarget.texture.format = three.RGBFormat;
+	      if (!alpha && frameBufferType === superThree.UnsignedByteType) {
+	        this.renderTarget.texture.format = superThree.RGBFormat;
 	      }
 
 	      if (frameBufferType !== undefined) {
@@ -3409,7 +3409,7 @@
 	      var capabilities = this.renderer.capabilities;
 	      var context = this.renderer.getContext();
 
-	      if (frameBufferType !== three.UnsignedByteType) {
+	      if (frameBufferType !== superThree.UnsignedByteType) {
 	        if (capabilities.isWebGL2) {
 	          context.getExtension("EXT_color_buffer_float");
 	        } else {
@@ -3424,8 +3424,8 @@
 	      var oldRenderer = this.renderer;
 
 	      if (oldRenderer !== null && oldRenderer !== renderer) {
-	        var oldSize = oldRenderer.getSize(new three.Vector2());
-	        var newSize = renderer.getSize(new three.Vector2());
+	        var oldSize = oldRenderer.getSize(new superThree.Vector2());
+	        var newSize = renderer.getSize(new superThree.Vector2());
 	        var parent = oldRenderer.domElement.parentNode;
 	        this.renderer = renderer;
 	        this.renderer.autoClear = false;
@@ -3447,13 +3447,13 @@
 	  }, {
 	    key: "createDepthTexture",
 	    value: function createDepthTexture() {
-	      var depthTexture = this.depthTexture = new three.DepthTexture();
+	      var depthTexture = this.depthTexture = new superThree.DepthTexture();
 
 	      if (this.inputBuffer.stencilBuffer) {
-	        depthTexture.format = three.DepthStencilFormat;
-	        depthTexture.type = three.UnsignedInt248Type;
+	        depthTexture.format = superThree.DepthStencilFormat;
+	        depthTexture.type = superThree.UnsignedInt248Type;
 	      } else {
-	        depthTexture.type = three.UnsignedIntType;
+	        depthTexture.type = superThree.UnsignedIntType;
 	      }
 
 	      return depthTexture;
@@ -3485,17 +3485,17 @@
 	  }, {
 	    key: "createBuffer",
 	    value: function createBuffer(depthBuffer, stencilBuffer, type, multisampling) {
-	      var size = this.renderer.getDrawingBufferSize(new three.Vector2());
+	      var size = this.renderer.getDrawingBufferSize(new superThree.Vector2());
 	      var alpha = this.renderer.getContext().getContextAttributes().alpha;
 	      var options = {
-	        format: !alpha && type === three.UnsignedByteType ? three.RGBFormat : three.RGBAFormat,
-	        minFilter: three.LinearFilter,
-	        magFilter: three.LinearFilter,
+	        format: !alpha && type === superThree.UnsignedByteType ? superThree.RGBFormat : superThree.RGBAFormat,
+	        minFilter: superThree.LinearFilter,
+	        magFilter: superThree.LinearFilter,
 	        stencilBuffer: stencilBuffer,
 	        depthBuffer: depthBuffer,
 	        type: type
 	      };
-	      var renderTarget = multisampling > 0 ? new three.WebGLMultisampleRenderTarget(size.width, size.height, options) : new three.WebGLRenderTarget(size.width, size.height, options);
+	      var renderTarget = multisampling > 0 ? new superThree.WebGLMultisampleRenderTarget(size.width, size.height, options) : new superThree.WebGLRenderTarget(size.width, size.height, options);
 
 	      if (multisampling > 0) {
 	        renderTarget.samples = multisampling;
@@ -3512,7 +3512,7 @@
 	      var renderer = this.renderer;
 	      var alpha = renderer.getContext().getContextAttributes().alpha;
 	      var frameBufferType = this.inputBuffer.texture.type;
-	      var drawingBufferSize = renderer.getDrawingBufferSize(new three.Vector2());
+	      var drawingBufferSize = renderer.getDrawingBufferSize(new superThree.Vector2());
 	      pass.setSize(drawingBufferSize.width, drawingBufferSize.height);
 	      pass.initialize(renderer, alpha, frameBufferType);
 
@@ -3657,13 +3657,13 @@
 	      var renderer = this.renderer;
 
 	      if (width === undefined || height === undefined) {
-	        var size = renderer.getSize(new three.Vector2());
+	        var size = renderer.getSize(new superThree.Vector2());
 	        width = size.width;
 	        height = size.height;
 	      }
 
 	      renderer.setSize(width, height, updateStyle);
-	      var drawingBufferSize = renderer.getDrawingBufferSize(new three.Vector2());
+	      var drawingBufferSize = renderer.getDrawingBufferSize(new superThree.Vector2());
 	      this.inputBuffer.setSize(drawingBufferSize.width, drawingBufferSize.height);
 	      this.outputBuffer.setSize(drawingBufferSize.width, drawingBufferSize.height);
 
@@ -3730,7 +3730,7 @@
 	  }, {
 	    key: "multisampling",
 	    get: function get() {
-	      return this.inputBuffer instanceof three.WebGLMultisampleRenderTarget ? this.inputBuffer.samples : 0;
+	      return this.inputBuffer instanceof superThree.WebGLMultisampleRenderTarget ? this.inputBuffer.samples : 0;
 	    },
 	    set: function set(value) {
 	      var buffer = this.inputBuffer;
@@ -3950,11 +3950,11 @@
 
 	    _this = _super.call(this, "BloomEffect", fragmentShader$e, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["texture", new three.Uniform(null)], ["intensity", new three.Uniform(intensity)]])
+	      uniforms: new Map([["texture", new superThree.Uniform(null)], ["intensity", new superThree.Uniform(intensity)]])
 	    });
-	    _this.renderTarget = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.renderTarget = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false
 	    });
@@ -4007,8 +4007,8 @@
 	    value: function initialize(renderer, alpha, frameBufferType) {
 	      this.blurPass.initialize(renderer, alpha, frameBufferType);
 
-	      if (!alpha && frameBufferType === three.UnsignedByteType) {
-	        this.renderTarget.texture.format = three.RGBFormat;
+	      if (!alpha && frameBufferType === superThree.UnsignedByteType) {
+	        this.renderTarget.texture.format = superThree.RGBFormat;
 	      }
 
 	      if (frameBufferType !== undefined) {
@@ -4109,7 +4109,7 @@
 	    return _super.call(this, "BokehEffect", fragmentShader$f, {
 	      blendFunction: blendFunction,
 	      attributes: EffectAttribute.CONVOLUTION | EffectAttribute.DEPTH,
-	      uniforms: new Map([["focus", new three.Uniform(focus)], ["dof", new three.Uniform(dof)], ["aperture", new three.Uniform(aperture)], ["maxBlur", new three.Uniform(maxBlur)]])
+	      uniforms: new Map([["focus", new superThree.Uniform(focus)], ["dof", new superThree.Uniform(dof)], ["aperture", new superThree.Uniform(aperture)], ["maxBlur", new superThree.Uniform(maxBlur)]])
 	    });
 	  }
 
@@ -4136,7 +4136,7 @@
 
 	    return _super.call(this, "BrightnessContrastEffect", fragmentShader$g, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["brightness", new three.Uniform(brightness)], ["contrast", new three.Uniform(contrast)]])
+	      uniforms: new Map([["brightness", new superThree.Uniform(brightness)], ["contrast", new superThree.Uniform(contrast)]])
 	    });
 	  }
 
@@ -4183,7 +4183,7 @@
 
 	    _this = _super.call(this, "ColorDepthEffect", fragmentShader$i, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["factor", new three.Uniform(1.0)]])
+	      uniforms: new Map([["factor", new superThree.Uniform(1.0)]])
 	    });
 	    _this.bits = 0;
 
@@ -4222,7 +4222,7 @@
 	        _ref$blendFunction = _ref.blendFunction,
 	        blendFunction = _ref$blendFunction === void 0 ? BlendFunction.NORMAL : _ref$blendFunction,
 	        _ref$offset = _ref.offset,
-	        offset = _ref$offset === void 0 ? new three.Vector2(0.001, 0.0005) : _ref$offset;
+	        offset = _ref$offset === void 0 ? new superThree.Vector2(0.001, 0.0005) : _ref$offset;
 
 	    _classCallCheck(this, ChromaticAberrationEffect);
 
@@ -4230,7 +4230,7 @@
 	      vertexShader: vertexShader$8,
 	      blendFunction: blendFunction,
 	      attributes: EffectAttribute.CONVOLUTION,
-	      uniforms: new Map([["offset", new three.Uniform(offset)]])
+	      uniforms: new Map([["offset", new superThree.Uniform(offset)]])
 	    });
 	  }
 
@@ -4332,12 +4332,12 @@
 	    _this = _super.call(this, "DepthOfFieldEffect", fragmentShader$l, {
 	      blendFunction: blendFunction,
 	      attributes: EffectAttribute.DEPTH,
-	      uniforms: new Map([["nearColorBuffer", new three.Uniform(null)], ["farColorBuffer", new three.Uniform(null)], ["nearCoCBuffer", new three.Uniform(null)], ["scale", new three.Uniform(1.0)]])
+	      uniforms: new Map([["nearColorBuffer", new superThree.Uniform(null)], ["farColorBuffer", new superThree.Uniform(null)], ["nearCoCBuffer", new superThree.Uniform(null)], ["scale", new superThree.Uniform(1.0)]])
 	    });
 	    _this.camera = camera;
-	    _this.renderTarget = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.renderTarget = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false
 	    });
@@ -4352,7 +4352,7 @@
 	    _this.renderTargetFar.texture.name = "DoF.Bokeh.Far";
 	    _this.uniforms.get("farColorBuffer").value = _this.renderTargetFar.texture;
 	    _this.renderTargetCoC = _this.renderTarget.clone();
-	    _this.renderTargetCoC.texture.format = three.RGBFormat;
+	    _this.renderTargetCoC.texture.format = superThree.RGBFormat;
 	    _this.renderTargetCoC.texture.name = "DoF.CoC";
 	    _this.renderTargetCoCBlurred = _this.renderTargetCoC.clone();
 	    _this.renderTargetCoCBlurred.texture.name = "DoF.CoC.Blurred";
@@ -4456,10 +4456,10 @@
 	      initializables.forEach(function (i) {
 	        return i.initialize(renderer, alpha, frameBufferType);
 	      });
-	      this.blurPass.initialize(renderer, alpha, three.UnsignedByteType);
+	      this.blurPass.initialize(renderer, alpha, superThree.UnsignedByteType);
 
-	      if (!alpha && frameBufferType === three.UnsignedByteType) {
-	        this.renderTargetNear.texture.type = three.RGBFormat;
+	      if (!alpha && frameBufferType === superThree.UnsignedByteType) {
+	        this.renderTargetNear.texture.type = superThree.RGBFormat;
 	      }
 
 	      if (frameBufferType !== undefined) {
@@ -4521,7 +4521,7 @@
 
 	    _this = _super.call(this, "DotScreenEffect", fragmentShader$m, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["angle", new three.Uniform(new three.Vector2())], ["scale", new three.Uniform(scale)]])
+	      uniforms: new Map([["angle", new superThree.Uniform(new superThree.Vector2())], ["scale", new superThree.Uniform(scale)]])
 	    });
 
 	    _this.setAngle(angle);
@@ -4557,7 +4557,7 @@
 
 	    return _super.call(this, "GammaCorrectionEffect", fragmentShader$n, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["gamma", new three.Uniform(gamma)]])
+	      uniforms: new Map([["gamma", new superThree.Uniform(gamma)]])
 	    });
 	  }
 
@@ -4565,14 +4565,14 @@
 	}(Effect);
 
 	function getNoise(size, format, type) {
-	  var channels = new Map([[three.LuminanceFormat, 1], [three.RedFormat, 1], [three.RGFormat, 2], [three.RGBFormat, 3], [three.RGBAFormat, 4]]);
+	  var channels = new Map([[superThree.LuminanceFormat, 1], [superThree.RedFormat, 1], [superThree.RGFormat, 2], [superThree.RGBFormat, 3], [superThree.RGBAFormat, 4]]);
 	  var data;
 
 	  if (!channels.has(format)) {
 	    console.error("Invalid noise texture format");
 	  }
 
-	  if (type === three.UnsignedByteType) {
+	  if (type === superThree.UnsignedByteType) {
 	    data = new Uint8Array(size * channels.get(format));
 
 	    for (var i = 0, l = data.length; i < l; ++i) {
@@ -4595,8 +4595,8 @@
 	  var _super = _createSuper(NoiseTexture);
 
 	  function NoiseTexture(width, height) {
-	    var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : three.LuminanceFormat;
-	    var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : three.UnsignedByteType;
+	    var format = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : superThree.LuminanceFormat;
+	    var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : superThree.UnsignedByteType;
 
 	    _classCallCheck(this, NoiseTexture);
 
@@ -4604,7 +4604,7 @@
 	  }
 
 	  return NoiseTexture;
-	}(three.DataTexture);
+	}(superThree.DataTexture);
 
 	var fragmentShader$o = "uniform sampler2D perturbationMap;uniform bool active;uniform float columns;uniform float random;uniform vec2 seed;uniform vec2 distortion;void mainUv(inout vec2 uv){if(active){if(uv.y<distortion.x+columns&&uv.y>distortion.x-columns*random){float sx=clamp(ceil(seed.x),0.0,1.0);uv.y=sx*(1.0-(uv.y+distortion.y))+(1.0-sx)*distortion.y;}if(uv.x<distortion.y+columns&&uv.x>distortion.y-columns*random){float sy=clamp(ceil(seed.y),0.0,1.0);uv.x=sy*distortion.x+(1.0-sy)*(1.0-(uv.x+distortion.x));}vec2 normal=texture2D(perturbationMap,uv*random*random).rg;uv+=normal*seed*(random*0.2);}}";
 
@@ -4628,11 +4628,11 @@
 	        _ref$chromaticAberrat = _ref.chromaticAberrationOffset,
 	        chromaticAberrationOffset = _ref$chromaticAberrat === void 0 ? null : _ref$chromaticAberrat,
 	        _ref$delay = _ref.delay,
-	        delay = _ref$delay === void 0 ? new three.Vector2(1.5, 3.5) : _ref$delay,
+	        delay = _ref$delay === void 0 ? new superThree.Vector2(1.5, 3.5) : _ref$delay,
 	        _ref$duration = _ref.duration,
-	        duration = _ref$duration === void 0 ? new three.Vector2(0.6, 1.0) : _ref$duration,
+	        duration = _ref$duration === void 0 ? new superThree.Vector2(0.6, 1.0) : _ref$duration,
 	        _ref$strength = _ref.strength,
-	        strength = _ref$strength === void 0 ? new three.Vector2(0.3, 1.0) : _ref$strength,
+	        strength = _ref$strength === void 0 ? new superThree.Vector2(0.3, 1.0) : _ref$strength,
 	        _ref$columns = _ref.columns,
 	        columns = _ref$columns === void 0 ? 0.05 : _ref$columns,
 	        _ref$ratio = _ref.ratio,
@@ -4646,14 +4646,14 @@
 
 	    _this = _super.call(this, "GlitchEffect", fragmentShader$o, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["perturbationMap", new three.Uniform(null)], ["columns", new three.Uniform(columns)], ["active", new three.Uniform(false)], ["random", new three.Uniform(1.0)], ["seed", new three.Uniform(new three.Vector2())], ["distortion", new three.Uniform(new three.Vector2())]])
+	      uniforms: new Map([["perturbationMap", new superThree.Uniform(null)], ["columns", new superThree.Uniform(columns)], ["active", new superThree.Uniform(false)], ["random", new superThree.Uniform(1.0)], ["seed", new superThree.Uniform(new superThree.Vector2())], ["distortion", new superThree.Uniform(new superThree.Vector2())]])
 	    });
 
 	    _this.setPerturbationMap(perturbationMap === null ? _this.generatePerturbationMap(dtSize) : perturbationMap);
 
 	    _this.delay = delay;
 	    _this.duration = duration;
-	    _this.breakPoint = new three.Vector2(randomFloat(_this.delay.x, _this.delay.y), randomFloat(_this.duration.x, _this.duration.y));
+	    _this.breakPoint = new superThree.Vector2(randomFloat(_this.delay.x, _this.delay.y), randomFloat(_this.duration.x, _this.duration.y));
 	    _this.time = 0;
 	    _this.seed = _this.uniforms.get("seed").value;
 	    _this.distortion = _this.uniforms.get("distortion").value;
@@ -4678,8 +4678,8 @@
 	        currentMap.dispose();
 	      }
 
-	      map.minFilter = map.magFilter = three.NearestFilter;
-	      map.wrapS = map.wrapT = three.RepeatWrapping;
+	      map.minFilter = map.magFilter = superThree.NearestFilter;
+	      map.wrapS = map.wrapT = superThree.RepeatWrapping;
 	      map.generateMipmaps = false;
 	      this.uniforms.get("perturbationMap").value = map;
 	    }
@@ -4687,7 +4687,7 @@
 	    key: "generatePerturbationMap",
 	    value: function generatePerturbationMap() {
 	      var size = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 64;
-	      var map = new NoiseTexture(size, size, three.RGBFormat);
+	      var map = new NoiseTexture(size, size, superThree.RGBFormat);
 	      map.name = tag;
 	      return map;
 	    }
@@ -4763,8 +4763,8 @@
 
 	var fragmentShader$p = "uniform sampler2D texture;void mainImage(const in vec4 inputColor,const in vec2 uv,out vec4 outputColor){outputColor=texture2D(texture,uv);}";
 
-	var v = new three.Vector3();
-	var m = new three.Matrix4();
+	var v = new superThree.Vector3();
+	var m = new superThree.Matrix4();
 	var GodRaysEffect = function (_Effect) {
 	  _inherits(GodRaysEffect, _Effect);
 
@@ -4804,17 +4804,17 @@
 	    _this = _super.call(this, "GodRaysEffect", fragmentShader$p, {
 	      blendFunction: blendFunction,
 	      attributes: EffectAttribute.DEPTH,
-	      uniforms: new Map([["texture", new three.Uniform(null)]])
+	      uniforms: new Map([["texture", new superThree.Uniform(null)]])
 	    });
 	    _this.camera = camera;
 	    _this.lightSource = lightSource;
 	    _this.lightSource.material.depthWrite = false;
 	    _this.lightSource.material.transparent = true;
-	    _this.lightScene = new three.Scene();
-	    _this.screenPosition = new three.Vector2();
-	    _this.renderTargetA = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.lightScene = new superThree.Scene();
+	    _this.screenPosition = new superThree.Vector2();
+	    _this.renderTargetA = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false
 	    });
@@ -4825,11 +4825,11 @@
 	    _this.renderTargetLight = _this.renderTargetA.clone();
 	    _this.renderTargetLight.texture.name = "GodRays.Light";
 	    _this.renderTargetLight.depthBuffer = true;
-	    _this.renderTargetLight.depthTexture = new three.DepthTexture();
+	    _this.renderTargetLight.depthTexture = new superThree.DepthTexture();
 	    _this.renderPassLight = new RenderPass(_this.lightScene, camera);
-	    _this.renderPassLight.getClearPass().overrideClearColor = new three.Color(0x000000);
+	    _this.renderPassLight.getClearPass().overrideClearColor = new superThree.Color(0x000000);
 	    _this.clearPass = new ClearPass(true, false, false);
-	    _this.clearPass.overrideClearColor = new three.Color(0x000000);
+	    _this.clearPass.overrideClearColor = new superThree.Color(0x000000);
 	    _this.blurPass = new BlurPass({
 	      resolutionScale: resolutionScale,
 	      width: width,
@@ -4939,10 +4939,10 @@
 	      this.depthMaskPass.initialize(renderer, alpha, frameBufferType);
 	      this.godRaysPass.initialize(renderer, alpha, frameBufferType);
 
-	      if (!alpha && frameBufferType === three.UnsignedByteType) {
-	        this.renderTargetA.texture.format = three.RGBFormat;
-	        this.renderTargetB.texture.format = three.RGBFormat;
-	        this.renderTargetLight.texture.format = three.RGBFormat;
+	      if (!alpha && frameBufferType === superThree.UnsignedByteType) {
+	        this.renderTargetA.texture.format = superThree.RGBFormat;
+	        this.renderTargetB.texture.format = superThree.RGBFormat;
+	        this.renderTargetLight.texture.format = superThree.RGBFormat;
 	      }
 
 	      if (frameBufferType !== undefined) {
@@ -5043,9 +5043,9 @@
 
 	    _this = _super.call(this, "GridEffect", fragmentShader$q, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["scale", new three.Uniform(new three.Vector2())], ["lineWidth", new three.Uniform(lineWidth)]])
+	      uniforms: new Map([["scale", new superThree.Uniform(new superThree.Vector2())], ["lineWidth", new superThree.Uniform(lineWidth)]])
 	    });
-	    _this.resolution = new three.Vector2();
+	    _this.resolution = new superThree.Vector2();
 	    _this.scale = Math.max(scale, 1e-6);
 	    _this.lineWidth = Math.max(lineWidth, 0.0);
 	    return _this;
@@ -5109,7 +5109,7 @@
 
 	    _this = _super.call(this, "HueSaturationEffect", fragmentShader$r, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["hue", new three.Uniform(new three.Vector3())], ["saturation", new three.Uniform(saturation)]])
+	      uniforms: new Map([["hue", new superThree.Uniform(new superThree.Vector3())], ["saturation", new superThree.Uniform(saturation)]])
 	    });
 
 	    _this.setHue(hue);
@@ -5216,7 +5216,7 @@
 	    _classCallCheck(this, OutlineEffect);
 
 	    _this = _super.call(this, "OutlineEffect", fragmentShader$t, {
-	      uniforms: new Map([["maskTexture", new three.Uniform(null)], ["edgeTexture", new three.Uniform(null)], ["edgeStrength", new three.Uniform(edgeStrength)], ["visibleEdgeColor", new three.Uniform(new three.Color(visibleEdgeColor))], ["hiddenEdgeColor", new three.Uniform(new three.Color(hiddenEdgeColor))], ["pulse", new three.Uniform(1.0)], ["patternScale", new three.Uniform(1.0)], ["patternTexture", new three.Uniform(null)]])
+	      uniforms: new Map([["maskTexture", new superThree.Uniform(null)], ["edgeTexture", new superThree.Uniform(null)], ["edgeStrength", new superThree.Uniform(edgeStrength)], ["visibleEdgeColor", new superThree.Uniform(new superThree.Color(visibleEdgeColor))], ["hiddenEdgeColor", new superThree.Uniform(new superThree.Color(hiddenEdgeColor))], ["pulse", new superThree.Uniform(1.0)], ["patternScale", new superThree.Uniform(1.0)], ["patternTexture", new superThree.Uniform(null)]])
 	    });
 
 	    _this.blendMode.addEventListener("change", function (event) {
@@ -5236,11 +5236,11 @@
 	    _this.xRay = xRay;
 	    _this.scene = scene;
 	    _this.camera = camera;
-	    _this.renderTargetMask = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.renderTargetMask = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
-	      format: three.RGBFormat
+	      format: superThree.RGBFormat
 	    });
 	    _this.renderTargetMask.texture.name = "Outline.Mask";
 	    _this.uniforms.get("maskTexture").value = _this.renderTargetMask.texture;
@@ -5250,14 +5250,14 @@
 	    _this.renderTargetBlurredOutline = _this.renderTargetOutline.clone();
 	    _this.renderTargetBlurredOutline.texture.name = "Outline.BlurredEdges";
 	    _this.clearPass = new ClearPass();
-	    _this.clearPass.overrideClearColor = new three.Color(0x000000);
+	    _this.clearPass.overrideClearColor = new superThree.Color(0x000000);
 	    _this.clearPass.overrideClearAlpha = 1.0;
 	    _this.depthPass = new DepthPass(scene, camera);
 	    _this.maskPass = new RenderPass(scene, camera, new DepthComparisonMaterial(_this.depthPass.texture, camera));
 
 	    var clearPass = _this.maskPass.getClearPass();
 
-	    clearPass.overrideClearColor = new three.Color(0xffffff);
+	    clearPass.overrideClearColor = new superThree.Color(0xffffff);
 	    clearPass.overrideClearAlpha = 1.0;
 	    _this.blurPass = new BlurPass({
 	      resolutionScale: resolutionScale,
@@ -5279,7 +5279,7 @@
 	    key: "setPatternTexture",
 	    value: function setPatternTexture(texture) {
 	      if (texture !== null) {
-	        texture.wrapS = texture.wrapT = three.RepeatWrapping;
+	        texture.wrapS = texture.wrapT = superThree.RepeatWrapping;
 	        this.defines.set("USE_PATTERN", "1");
 	        this.uniforms.get("patternTexture").value = texture;
 	        this.setVertexShader(vertexShader$9);
@@ -5376,7 +5376,7 @@
 	  }, {
 	    key: "initialize",
 	    value: function initialize(renderer, alpha, frameBufferType) {
-	      this.blurPass.initialize(renderer, alpha, three.UnsignedByteType);
+	      this.blurPass.initialize(renderer, alpha, superThree.UnsignedByteType);
 
 	      if (frameBufferType !== undefined) {
 	        this.depthPass.initialize(renderer, alpha, frameBufferType);
@@ -5474,9 +5474,9 @@
 	    _classCallCheck(this, PixelationEffect);
 
 	    _this = _super.call(this, "PixelationEffect", fragmentShader$u, {
-	      uniforms: new Map([["active", new three.Uniform(false)], ["d", new three.Uniform(new three.Vector2())]])
+	      uniforms: new Map([["active", new superThree.Uniform(false)], ["d", new superThree.Uniform(new superThree.Vector2())]])
 	    });
-	    _this.resolution = new three.Vector2();
+	    _this.resolution = new superThree.Vector2();
 	    _this.granularity = granularity;
 	    return _this;
 	  }
@@ -5556,7 +5556,7 @@
 	    _this = _super.call(this, "RealisticBokehEffect", fragmentShader$v, {
 	      blendFunction: blendFunction,
 	      attributes: EffectAttribute.CONVOLUTION | EffectAttribute.DEPTH,
-	      uniforms: new Map([["focus", new three.Uniform(focus)], ["focalLength", new three.Uniform(focalLength)], ["fStop", new three.Uniform(fStop)], ["luminanceThreshold", new three.Uniform(luminanceThreshold)], ["luminanceGain", new three.Uniform(luminanceGain)], ["bias", new three.Uniform(bias)], ["fringe", new three.Uniform(fringe)], ["maxBlur", new three.Uniform(maxBlur)], ["dof", new three.Uniform(null)]])
+	      uniforms: new Map([["focus", new superThree.Uniform(focus)], ["focalLength", new superThree.Uniform(focalLength)], ["fStop", new superThree.Uniform(fStop)], ["luminanceThreshold", new superThree.Uniform(luminanceThreshold)], ["luminanceGain", new superThree.Uniform(luminanceGain)], ["bias", new superThree.Uniform(bias)], ["fringe", new superThree.Uniform(fringe)], ["maxBlur", new superThree.Uniform(maxBlur)], ["dof", new superThree.Uniform(null)]])
 	    });
 	    _this.rings = rings;
 	    _this.samples = samples;
@@ -5613,7 +5613,7 @@
 	      if (this.manualDoF !== value) {
 	        if (value) {
 	          this.defines.set("MANUAL_DOF", "1");
-	          this.uniforms.get("dof").value = new three.Vector4(0.2, 1.0, 0.2, 2.0);
+	          this.uniforms.get("dof").value = new superThree.Vector4(0.2, 1.0, 0.2, 2.0);
 	        } else {
 	          this.defines["delete"]("MANUAL_DOF");
 	          this.uniforms.get("dof").value = null;
@@ -5663,9 +5663,9 @@
 
 	    _this = _super.call(this, "ScanlineEffect", fragmentShader$w, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["count", new three.Uniform(0.0)]])
+	      uniforms: new Map([["count", new superThree.Uniform(0.0)]])
 	    });
-	    _this.resolution = new three.Vector2();
+	    _this.resolution = new superThree.Vector2();
 	    _this.density = density;
 	    return _this;
 	  }
@@ -5697,8 +5697,8 @@
 	var vertexShader$a = "uniform float size;uniform float cameraDistance;varying float vSize;void mainSupport(){vSize=(0.1*cameraDistance)/size;}";
 
 	var HALF_PI = Math.PI * 0.5;
-	var v$1 = new three.Vector3();
-	var ab = new three.Vector3();
+	var v$1 = new superThree.Vector3();
+	var ab = new superThree.Vector3();
 	var ShockWaveEffect = function (_Effect) {
 	  _inherits(ShockWaveEffect, _Effect);
 
@@ -5707,7 +5707,7 @@
 	  function ShockWaveEffect(camera) {
 	    var _this;
 
-	    var epicenter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new three.Vector3();
+	    var epicenter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new superThree.Vector3();
 
 	    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
 	        _ref$speed = _ref.speed,
@@ -5723,7 +5723,7 @@
 
 	    _this = _super.call(this, "ShockWaveEffect", fragmentShader$x, {
 	      vertexShader: vertexShader$a,
-	      uniforms: new Map([["active", new three.Uniform(false)], ["center", new three.Uniform(new three.Vector2(0.5, 0.5))], ["cameraDistance", new three.Uniform(1.0)], ["size", new three.Uniform(1.0)], ["radius", new three.Uniform(-waveSize)], ["maxRadius", new three.Uniform(maxRadius)], ["waveSize", new three.Uniform(waveSize)], ["amplitude", new three.Uniform(amplitude)]])
+	      uniforms: new Map([["active", new superThree.Uniform(false)], ["center", new superThree.Uniform(new superThree.Vector2(0.5, 0.5))], ["cameraDistance", new superThree.Uniform(1.0)], ["size", new superThree.Uniform(1.0)], ["radius", new superThree.Uniform(-waveSize)], ["maxRadius", new superThree.Uniform(maxRadius)], ["waveSize", new superThree.Uniform(waveSize)], ["amplitude", new superThree.Uniform(amplitude)]])
 	    });
 	    _this.camera = camera;
 	    _this.epicenter = epicenter;
@@ -5790,25 +5790,25 @@
 	    _this.scene = scene;
 	    _this.camera = camera;
 	    _this.clearPass = new ClearPass(true, true, false);
-	    _this.clearPass.overrideClearColor = new three.Color(0x000000);
+	    _this.clearPass.overrideClearColor = new superThree.Color(0x000000);
 	    _this.renderPass = new RenderPass(scene, camera);
 	    _this.renderPass.clear = false;
-	    _this.blackoutPass = new RenderPass(scene, camera, new three.MeshBasicMaterial({
+	    _this.blackoutPass = new RenderPass(scene, camera, new superThree.MeshBasicMaterial({
 	      color: 0x000000
 	    }));
 	    _this.blackoutPass.clear = false;
 
 	    _this.backgroundPass = function () {
-	      var backgroundScene = new three.Scene();
+	      var backgroundScene = new superThree.Scene();
 	      var pass = new RenderPass(backgroundScene, camera);
 	      backgroundScene.background = scene.background;
 	      pass.clear = false;
 	      return pass;
 	    }();
 
-	    _this.renderTargetSelection = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.renderTargetSelection = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: true
 	    });
@@ -5875,8 +5875,8 @@
 	      this.blackoutPass.initialize(renderer, alpha, frameBufferType);
 	      this.renderPass.initialize(renderer, alpha, frameBufferType);
 
-	      if (!alpha && frameBufferType === three.UnsignedByteType) {
-	        this.renderTargetSelection.texture.format = three.RGBFormat;
+	      if (!alpha && frameBufferType === superThree.UnsignedByteType) {
+	        this.renderTargetSelection.texture.format = superThree.RGBFormat;
 	      }
 
 	      if (frameBufferType !== undefined) {
@@ -5914,7 +5914,7 @@
 
 	    return _super.call(this, "SepiaEffect", fragmentShader$y, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["intensity", new three.Uniform(intensity)]])
+	      uniforms: new Map([["intensity", new superThree.Uniform(intensity)]])
 	    });
 	  }
 
@@ -5946,23 +5946,23 @@
 	      vertexShader: vertexShader$b,
 	      blendFunction: BlendFunction.NORMAL,
 	      attributes: EffectAttribute.CONVOLUTION,
-	      uniforms: new Map([["weightMap", new three.Uniform(null)]])
+	      uniforms: new Map([["weightMap", new superThree.Uniform(null)]])
 	    });
-	    _this.renderTargetEdges = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
+	    _this.renderTargetEdges = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false,
-	      format: three.RGBFormat
+	      format: superThree.RGBFormat
 	    });
 	    _this.renderTargetEdges.texture.name = "SMAA.Edges";
 	    _this.renderTargetWeights = _this.renderTargetEdges.clone();
 	    _this.renderTargetWeights.texture.name = "SMAA.Weights";
-	    _this.renderTargetWeights.texture.format = three.RGBAFormat;
+	    _this.renderTargetWeights.texture.format = superThree.RGBAFormat;
 	    _this.uniforms.get("weightMap").value = _this.renderTargetWeights.texture;
 	    _this.clearPass = new ClearPass(true, false, false);
-	    _this.clearPass.overrideClearColor = new three.Color(0x000000);
+	    _this.clearPass.overrideClearColor = new superThree.Color(0x000000);
 	    _this.clearPass.overrideClearAlpha = 1.0;
-	    _this.edgeDetectionPass = new ShaderPass(new EdgeDetectionMaterial(new three.Vector2(), edgeDetectionMode));
+	    _this.edgeDetectionPass = new ShaderPass(new EdgeDetectionMaterial(new superThree.Vector2(), edgeDetectionMode));
 
 	    if (edgeDetectionMode === EdgeDetectionMode.DEPTH) {
 	      _this.setAttributes(_this.getAttributes() | EffectAttribute.DEPTH);
@@ -5971,11 +5971,11 @@
 	    _this.weightsPass = new ShaderPass(new SMAAWeightsMaterial());
 
 	    _this.weightsPass.getFullscreenMaterial().uniforms.searchTexture.value = function () {
-	      var searchTexture = new three.Texture(searchImage);
+	      var searchTexture = new superThree.Texture(searchImage);
 	      searchTexture.name = "SMAA.Search";
-	      searchTexture.magFilter = three.NearestFilter;
-	      searchTexture.minFilter = three.NearestFilter;
-	      searchTexture.format = three.RGBAFormat;
+	      searchTexture.magFilter = superThree.NearestFilter;
+	      searchTexture.minFilter = superThree.NearestFilter;
+	      searchTexture.format = superThree.RGBAFormat;
 	      searchTexture.generateMipmaps = false;
 	      searchTexture.needsUpdate = true;
 	      searchTexture.flipY = true;
@@ -5983,10 +5983,10 @@
 	    }();
 
 	    _this.weightsPass.getFullscreenMaterial().uniforms.areaTexture.value = function () {
-	      var areaTexture = new three.Texture(areaImage);
+	      var areaTexture = new superThree.Texture(areaImage);
 	      areaTexture.name = "SMAA.Area";
-	      areaTexture.minFilter = three.LinearFilter;
-	      areaTexture.format = three.RGBAFormat;
+	      areaTexture.minFilter = superThree.LinearFilter;
+	      areaTexture.format = superThree.RGBAFormat;
 	      areaTexture.generateMipmaps = false;
 	      areaTexture.needsUpdate = true;
 	      areaTexture.flipY = false;
@@ -6177,14 +6177,14 @@
 	    _this = _super.call(this, "SSAOEffect", fragmentShader$A, {
 	      blendFunction: blendFunction,
 	      attributes: EffectAttribute.DEPTH,
-	      uniforms: new Map([["aoBuffer", new three.Uniform(null)], ["normalDepthBuffer", new three.Uniform(null)], ["luminanceInfluence", new three.Uniform(luminanceInfluence)], ["color", new three.Uniform(null)], ["scale", new three.Uniform(0.0)]])
+	      uniforms: new Map([["aoBuffer", new superThree.Uniform(null)], ["normalDepthBuffer", new superThree.Uniform(null)], ["luminanceInfluence", new superThree.Uniform(luminanceInfluence)], ["color", new superThree.Uniform(null)], ["scale", new superThree.Uniform(0.0)]])
 	    });
-	    _this.renderTargetAO = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.renderTargetAO = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false,
-	      format: three.RGBFormat
+	      format: superThree.RGBFormat
 	    });
 	    _this.renderTargetAO.texture.name = "AO.Target";
 	    _this.renderTargetAO.texture.generateMipmaps = false;
@@ -6194,7 +6194,7 @@
 	    _this.camera = camera;
 	    _this.ssaoPass = new ShaderPass(function () {
 	      var noiseTexture = new NoiseTexture(NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE);
-	      noiseTexture.wrapS = noiseTexture.wrapT = three.RepeatWrapping;
+	      noiseTexture.wrapS = noiseTexture.wrapT = superThree.RepeatWrapping;
 	      var material = new SSAOMaterial(camera);
 	      material.uniforms.noiseTexture.value = noiseTexture;
 	      material.uniforms.intensity.value = intensity;
@@ -6360,7 +6360,7 @@
 	          uniforms.get("color").value.set(value);
 	        } else {
 	          defines.set("COLORIZE", "1");
-	          uniforms.get("color").value = new three.Color(value);
+	          uniforms.get("color").value = new superThree.Color(value);
 	          this.setChanged();
 	        }
 	      } else if (defines.has("COLORIZE")) {
@@ -6399,7 +6399,7 @@
 	    _this = _super.call(this, "TextureEffect", fragmentShader$B, {
 	      blendFunction: blendFunction,
 	      defines: new Map([["TEXEL", "texel"]]),
-	      uniforms: new Map([["texture", new three.Uniform(null)], ["scale", new three.Uniform(1.0)], ["uvTransform", new three.Uniform(null)]])
+	      uniforms: new Map([["texture", new superThree.Uniform(null)], ["scale", new superThree.Uniform(1.0)], ["uvTransform", new superThree.Uniform(null)]])
 	    });
 	    _this.texture = texture;
 	    _this.aspectCorrection = aspectCorrection;
@@ -6445,9 +6445,9 @@
 	        this.uniforms.get("texture").value = value;
 
 	        if (value !== null) {
-	          if (value.encoding === three.sRGBEncoding) {
+	          if (value.encoding === superThree.sRGBEncoding) {
 	            this.defines.set("texelToLinear(texel)", "sRGBToLinear(texel)");
-	          } else if (value.encoding === three.LinearEncoding) {
+	          } else if (value.encoding === superThree.LinearEncoding) {
 	            this.defines.set("texelToLinear(texel)", "texel");
 	          } else {
 	            console.log("Unsupported encoding: " + value.encoding);
@@ -6494,7 +6494,7 @@
 	          }
 
 	          this.defines.set("UV_TRANSFORM", "1");
-	          this.uniforms.get("uvTransform").value = new three.Matrix3();
+	          this.uniforms.get("uvTransform").value = new superThree.Matrix3();
 	          this.setVertexShader(vertexShader$c);
 	        } else {
 	          this.defines["delete"]("UV_TRANSFORM");
@@ -6540,21 +6540,21 @@
 
 	    _this = _super.call(this, "ToneMappingEffect", fragmentShader$C, {
 	      blendFunction: blendFunction,
-	      uniforms: new Map([["luminanceMap", new three.Uniform(null)], ["middleGrey", new three.Uniform(middleGrey)], ["maxLuminance", new three.Uniform(maxLuminance)], ["averageLuminance", new three.Uniform(averageLuminance)]])
+	      uniforms: new Map([["luminanceMap", new superThree.Uniform(null)], ["middleGrey", new superThree.Uniform(middleGrey)], ["maxLuminance", new superThree.Uniform(maxLuminance)], ["averageLuminance", new superThree.Uniform(averageLuminance)]])
 	    });
-	    _this.renderTargetLuminance = new three.WebGLRenderTarget(1, 1, {
-	      minFilter: three.LinearMipmapLinearFilter !== undefined ? three.LinearMipmapLinearFilter : three.LinearMipMapLinearFilter,
-	      magFilter: three.LinearFilter,
+	    _this.renderTargetLuminance = new superThree.WebGLRenderTarget(1, 1, {
+	      minFilter: superThree.LinearMipmapLinearFilter !== undefined ? superThree.LinearMipmapLinearFilter : superThree.LinearMipMapLinearFilter,
+	      magFilter: superThree.LinearFilter,
 	      stencilBuffer: false,
 	      depthBuffer: false,
-	      format: three.RGBFormat
+	      format: superThree.RGBFormat
 	    });
 	    _this.renderTargetLuminance.texture.name = "ToneMapping.Luminance";
 	    _this.renderTargetLuminance.texture.generateMipmaps = true;
 	    _this.renderTargetAdapted = _this.renderTargetLuminance.clone();
 	    _this.renderTargetAdapted.texture.name = "ToneMapping.AdaptedLuminance";
 	    _this.renderTargetAdapted.texture.generateMipmaps = false;
-	    _this.renderTargetAdapted.texture.minFilter = three.LinearFilter;
+	    _this.renderTargetAdapted.texture.minFilter = superThree.LinearFilter;
 	    _this.renderTargetPrevious = _this.renderTargetAdapted.clone();
 	    _this.renderTargetPrevious.texture.name = "ToneMapping.PreviousLuminance";
 	    _this.savePass = new SavePass(_this.renderTargetPrevious, false);
@@ -6595,7 +6595,7 @@
 	    key: "initialize",
 	    value: function initialize(renderer, alpha, frameBufferType) {
 	      var clearPass = new ClearPass(true, false, false);
-	      clearPass.overrideClearColor = new three.Color(0x7fffff);
+	      clearPass.overrideClearColor = new superThree.Color(0x7fffff);
 	      clearPass.render(renderer, this.renderTargetPrevious);
 	      clearPass.dispose();
 	    }
@@ -6676,7 +6676,7 @@
 	    }, options);
 	    _this = _super.call(this, "VignetteEffect", fragmentShader$D, {
 	      blendFunction: settings.blendFunction,
-	      uniforms: new Map([["offset", new three.Uniform(settings.offset)], ["darkness", new three.Uniform(settings.darkness)]])
+	      uniforms: new Map([["offset", new superThree.Uniform(settings.offset)], ["darkness", new superThree.Uniform(settings.darkness)]])
 	    });
 	    _this.eskil = settings.eskil;
 	    return _this;
@@ -6804,7 +6804,7 @@
 	      }
 
 	      var externalManager = this.manager;
-	      var internalManager = new three.LoadingManager();
+	      var internalManager = new superThree.LoadingManager();
 	      externalManager.itemStart("smaa-search");
 	      externalManager.itemStart("smaa-area");
 	      internalManager.itemStart("smaa-search");
@@ -6841,7 +6841,7 @@
 	  }]);
 
 	  return SMAAImageLoader;
-	}(three.Loader);
+	}(superThree.Loader);
 
 	var Vector2 = function () {
 	  function Vector2() {

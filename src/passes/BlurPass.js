@@ -1,4 +1,4 @@
-import { LinearFilter, RGBFormat, UnsignedByteType, WebGLRenderTarget } from "three";
+import { LinearFilter, RGBFormat, UnsignedByteType, WebGLRenderTarget } from "super-three";
 import { ConvolutionMaterial, KernelSize } from "../materials";
 import { Resizer } from "../core/Resizer";
 import { Pass } from "./Pass";

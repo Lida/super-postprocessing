@@ -1,4 +1,4 @@
-import { PerspectiveCamera, ShaderMaterial, Uniform, Vector2 } from "three";
+import { PerspectiveCamera, ShaderMaterial, Uniform, Vector2 } from "super-three";
 
 import fragmentTemplate from "./glsl/effect/shader.frag";
 import vertexTemplate from "./glsl/effect/shader.vert";

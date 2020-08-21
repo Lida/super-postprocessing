@@ -8,7 +8,7 @@ import {
 	Uniform,
 	Vector2,
 	WebGLRenderTarget
-} from "three";
+} from "super-three";
 
 import { EdgeDetectionMaterial, EdgeDetectionMode, SMAAWeightsMaterial } from "../materials";
 import { ClearPass, ShaderPass } from "../passes";

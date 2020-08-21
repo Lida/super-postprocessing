@@ -1,4 +1,4 @@
-import { ShaderMaterial, Uniform, Vector2 } from "three";
+import { ShaderMaterial, Uniform, Vector2 } from "super-three";
 
 import fragmentShader from "./glsl/smaa-weights/shader.frag";
 import vertexShader from "./glsl/smaa-weights/shader.vert";
